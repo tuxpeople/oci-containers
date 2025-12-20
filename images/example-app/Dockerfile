@@ -11,11 +11,11 @@ LABEL org.opencontainers.image.title="example-app"
 LABEL org.opencontainers.image.description="Example application container"
 LABEL org.opencontainers.image.vendor="tuxpeople"
 
-# Install packages with pinned versions
+# Install packages
 RUN apk add --no-cache \
-    bash~=5.2 \
-    curl~=8.5 \
-    vim~=9.0 \
+    bash \
+    curl \
+    vim \
     && rm -rf /var/cache/apk/*
 
 # Create non-root user

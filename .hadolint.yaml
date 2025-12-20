@@ -4,10 +4,11 @@
 
 # Ignore specific rules globally
 ignored:
-  # DL3018: Pin versions in apk add (can be too strict for base images)
-  # - DL3018
-  # DL3008: Pin versions in apt-get install
-  # - DL3008
+  # DL3018: Pin versions in apk add
+  # Reason: Base images are version-pinned (alpine:3.19), packages update with base
+  # Renovate handles base image updates automatically
+  # Pinning individual packages is fragile and breaks on base updates
+  - DL3018
 
 # Trusted registries (images from these don't trigger warnings)
 trustedRegistries:
