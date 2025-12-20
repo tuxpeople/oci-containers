@@ -35,5 +35,6 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD ["sh", "-c", "echo 'healthy'"]
 
-# Default command
-CMD ["/bin/bash"]
+# Default command - keeps container running for Goss tests
+# In production, override with: docker run <image> /bin/bash
+CMD ["sleep", "infinity"]

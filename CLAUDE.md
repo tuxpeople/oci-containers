@@ -221,6 +221,23 @@ CVE-2024-1234
 - Configuration validation
 - Port bindings
 
+**IMPORTANT for Goss:** Container must stay running during tests.
+
+```dockerfile
+# ✅ GOOD - Container stays alive for Goss
+CMD ["sleep", "infinity"]
+# or
+CMD ["tail", "-f", "/dev/null"]
+
+# ❌ BAD - Container exits immediately
+CMD ["/bin/bash"]  # Exits without interactive terminal
+```
+
+For interactive use, override CMD:
+```bash
+docker run -it myimage /bin/bash
+```
+
 **Custom Tests** - Add `test.sh` for:
 - Complex integration tests
 - Multi-container scenarios

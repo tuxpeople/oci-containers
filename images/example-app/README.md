@@ -5,7 +5,11 @@ A simple example container demonstrating the OCI containers repository structure
 ## Usage
 
 ```bash
-docker run -it ghcr.io/tuxpeople/example-app:latest
+# Run with shell (interactive)
+docker run -it --rm ghcr.io/tuxpeople/example-app:latest /bin/bash
+
+# Run as daemon (keeps running)
+docker run -d ghcr.io/tuxpeople/example-app:latest
 ```
 
 ## Features
