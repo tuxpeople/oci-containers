@@ -218,11 +218,13 @@ jobs:
         if: github.event_name != 'pull_request'
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           images=()
-          for tag in ${{ steps.meta.outputs.tags }}; do
+          while IFS= read -r tag; do
+            [[ -z "$tag" ]] && continue
             images+=("${tag}@${DIGEST}")
-          done
+          done <<< "$TAGS"
           cosign sign --yes "${images[@]}"
 
       # ==========================================
