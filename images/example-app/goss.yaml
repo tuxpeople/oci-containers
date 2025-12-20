@@ -1,0 +1,45 @@
+# Example Goss tests
+# https://github.com/goss-org/goss
+
+# Check if packages are installed
+package:
+  bash:
+    installed: true
+  curl:
+    installed: true
+  vim:
+    installed: true
+
+# Check if user exists
+user:
+  appuser:
+    exists: true
+    uid: 1000
+    gid: 1000
+    home: /home/appuser
+
+# Check if commands are available
+command:
+  bash --version:
+    exit-status: 0
+  curl --version:
+    exit-status: 0
+
+# File checks
+file:
+  /bin/bash:
+    exists: true
+    filetype: file
+    mode: "0755"
+
+# Port checks (if your app exposes ports)
+# port:
+#   tcp:8080:
+#     listening: true
+#     ip:
+#       - 0.0.0.0
+
+# Process checks (if your app runs a process)
+# process:
+#   myapp:
+#     running: true

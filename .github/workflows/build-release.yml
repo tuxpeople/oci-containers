@@ -1,0 +1,277 @@
+name: "Build & Release"
+
+# Golden Pipeline - Best Practices from all repos
+# Features: Hadolint, Trivy, Cosign, SBOM, Provenance, Multi-Arch, Auto-Tagging
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: "3 3 * * *"  # Nightly builds
+  push:
+    branches:
+      - "main"
+    paths:
+      - "images/**"
+      - ".github/workflows/build-release.yml"
+  workflow_dispatch:  # Manual trigger
+
+env:
+  PLATFORMS: "linux/amd64,linux/arm64"
+  REGISTRY_GHCR: "ghcr.io"
+  REGISTRY_DOCKERHUB: "docker.io"
+  DOCKER_USER: "tdeutsch"
+
+jobs:
+  # Determine which images to build
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has-changes: ${{ steps.set-matrix.outputs.has-changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed images
+        id: set-matrix
+        run: |
+          # List all image directories
+          images=$(find images -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n")[:-1]')
+          
+          # On schedule/manual: build all
+          # On push: only changed images
+          if [[ "${{ github.event_name }}" == "schedule" ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "matrix=$images" >> $GITHUB_OUTPUT
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+          else
+            # Detect changed images since last push
+            changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} || echo "images/")
+            changed_images=$(echo "$changed_files" | grep "^images/" | cut -d'/' -f2 | sort -u | jq -R -s -c 'split("\n")[:-1] | select(length > 0)')
+            
+            if [[ "$changed_images" == "[]" ]] || [[ -z "$changed_images" ]]; then
+              echo "matrix=[]" >> $GITHUB_OUTPUT
+              echo "has-changes=false" >> $GITHUB_OUTPUT
+            else
+              echo "matrix=$changed_images" >> $GITHUB_OUTPUT
+              echo "has-changes=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # For Cosign
+      security-events: write  # For Trivy SARIF
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ==========================================
+      # PRE-BUILD: Linting & Validation
+      # ==========================================
+      
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: images/${{ matrix.image }}/Dockerfile
+          failure-threshold: warning
+
+      # ==========================================
+      # SETUP: Build Environment
+      # ==========================================
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      # ==========================================
+      # METADATA: Tagging Strategy
+      # ==========================================
+
+      - name: Bump version and push tag if needed
+        id: tag_version
+        if: github.event_name == 'push'
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: false
+          tag_prefix: "${{ matrix.image }}-v"
+
+      - name: Create GitHub release if new version
+        uses: softprops/action-gh-release@v2
+        if: steps.tag_version.outputs.new_tag
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          name: "Release ${{ steps.tag_version.outputs.new_tag }}"
+          body: ${{ steps.tag_version.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}
+            ${{ env.REGISTRY_DOCKERHUB }}/${{ env.DOCKER_USER }}/${{ matrix.image }}
+          tags: |
+            type=schedule,pattern=nightly
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}},value=${{ steps.tag_version.outputs.new_tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag_version.outputs.new_tag }}
+            type=semver,pattern={{major}},value=${{ steps.tag_version.outputs.new_tag }}
+            type=sha
+          labels: |
+            org.opencontainers.image.title=${{ matrix.image }}
+            org.opencontainers.image.description=Container image for ${{ matrix.image }}
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
+
+      # ==========================================
+      # REGISTRY: Login
+      # ==========================================
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ==========================================
+      # BUILD: Multi-Arch with SBOM & Provenance
+      # ==========================================
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./images/${{ matrix.image }}
+          platforms: ${{ env.PLATFORMS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          sbom: true
+          provenance: true
+
+      # ==========================================
+      # SECURITY: Trivy Scan
+      # ==========================================
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail build, just report
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy (Table Output)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      # ==========================================
+      # SIGNING: Cosign (Keyless)
+      # ==========================================
+
+      - name: Sign image with Cosign
+        if: github.event_name != 'pull_request'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          images=()
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            images+=("${tag}@${DIGEST}")
+          done
+          cosign sign --yes "${images[@]}"
+
+      # ==========================================
+      # TESTING: Optional Goss Tests
+      # ==========================================
+
+      - name: Setup Goss
+        if: hashFiles(format('images/{0}/goss.yaml', matrix.image)) != ''
+        uses: e1himself/goss-installation-action@v1
+        with:
+          version: latest
+
+      - name: Run Goss tests
+        if: hashFiles(format('images/{0}/goss.yaml', matrix.image)) != ''
+        env:
+          GOSS_FILE: images/${{ matrix.image }}/goss.yaml
+          GOSS_OPTS: --retry-timeout 60s --sleep 2s --color --format documentation
+        run: |
+          image="${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}"
+          dgoss run "${image}"
+
+      # ==========================================
+      # REGISTRY: Docker Hub Description
+      # ==========================================
+
+      - name: Update Docker Hub description
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKER_USER }}/${{ matrix.image }}
+          short-description: "Container image for ${{ matrix.image }}"
+          readme-filepath: ./images/${{ matrix.image }}/README.md
+
+  # ==========================================
+  # SUMMARY: Build Status
+  # ==========================================
+
+  build-summary:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check build status
+        run: |
+          if [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "❌ Build failed"
+            exit 1
+          else
+            echo "✅ Build successful"
+          fi

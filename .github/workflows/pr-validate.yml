@@ -1,0 +1,117 @@
+name: "PR: Validate"
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: ["opened", "synchronize", "reopened"]
+    paths:
+      - "images/**"
+      - ".github/workflows/**"
+
+concurrency:
+  group: ${{ github.head_ref }}-pr-validate
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.detect-changes.outputs.matrix) }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: images/${{ matrix.image }}/Dockerfile
+          failure-threshold: error
+
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has-changes: ${{ steps.set-matrix.outputs.has-changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed images
+        id: set-matrix
+        run: |
+          # Get changed files in PR
+          changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          changed_images=$(echo "$changed_files" | grep "^images/" | cut -d'/' -f2 | sort -u | jq -R -s -c 'split("\n")[:-1] | select(length > 0)')
+          
+          if [[ "$changed_images" == "[]" ]] || [[ -z "$changed_images" ]]; then
+            echo "matrix=[]" >> $GITHUB_OUTPUT
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "matrix=$changed_images" >> $GITHUB_OUTPUT
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Changed images: $changed_images"
+
+  build-test:
+    needs: [detect-changes, lint]
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./images/${{ matrix.image }}
+          platforms: ${{ env.PLATFORMS }}
+          push: false
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Run Trivy vulnerability scanner
+        run: |
+          trivy image \
+            --severity CRITICAL,HIGH \
+            --format table \
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
+
+      - name: Setup Goss
+        if: hashFiles(format('images/{0}/goss.yaml', matrix.image)) != ''
+        uses: e1himself/goss-installation-action@v1
+        with:
+          version: latest
+
+      - name: Run Goss tests
+        if: hashFiles(format('images/{0}/goss.yaml', matrix.image)) != ''
+        env:
+          GOSS_FILE: images/${{ matrix.image }}/goss.yaml
+          GOSS_OPTS: --retry-timeout 60s --sleep 2s --color --format documentation
+        run: |
+          dgoss run ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
+
+env:
+  PLATFORMS: "linux/amd64,linux/arm64"
