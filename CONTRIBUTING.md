@@ -11,13 +11,76 @@ Danke für dein Interesse! Hier sind die Guidelines.
 
 ## 📝 Commit Messages
 
+**WICHTIG:** Commit Messages steuern automatisches Versioning!
+
 Verwende [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-feat(image-name): add feature
-fix(image-name): fix bug
-docs(image-name): update documentation
-chore(image-name): update dependencies
+<type>(<scope>): <subject>
+
+[optional body]
+
+[optional footer]
+```
+
+### Types und Versioning
+
+| Type | Beschreibung | Version Bump |
+|------|--------------|-------------|
+| `fix` | Bug Fix | **Patch** (1.0.0 → 1.0.1) |
+| `feat` | Neues Feature | **Minor** (1.0.0 → 1.1.0) |
+| `feat!` | Breaking Change | **Major** (1.0.0 → 2.0.0) |
+| `docs` | Nur Dokumentation | Kein Bump |
+| `chore` | Wartung/Dependencies | **Patch** |
+| `refactor` | Code Refactoring | Kein Bump |
+| `test` | Tests | Kein Bump |
+| `ci` | CI/CD Änderungen | Kein Bump |
+
+### Breaking Changes
+
+Für Major Version Bump:
+
+```bash
+# Option 1: ! nach Type
+git commit -m "feat(my-app)!: change API schema"
+
+# Option 2: BREAKING CHANGE im Footer
+git commit -m "feat(my-app): change API schema
+
+BREAKING CHANGE: /v1 endpoint removed, use /v2"
+```
+
+### Beispiele
+
+```bash
+# Neues Feature (→ Minor bump)
+git commit -m "feat(nginx): add custom error pages"
+
+# Bug Fix (→ Patch bump)
+git commit -m "fix(postgres): correct healthcheck script"
+
+# Dependency Update (→ Patch bump)
+git commit -m "chore(alpine-base): update to alpine 3.20"
+
+# Breaking Change (→ Major bump)
+git commit -m "feat(api)!: change authentication method
+
+BREAKING CHANGE: OAuth2 now required, API keys removed"
+
+# Dokumentation (kein Bump)
+git commit -m "docs(readme): update installation instructions"
+
+# Mehrere Images
+git commit -m "feat(nginx,postgres): add init scripts"
+```
+
+### Erste Version
+
+Erster Commit für ein neues Image erstellt automatisch `v0.1.0`:
+
+```bash
+git commit -m "feat(my-app): add new container image"
+# → Erstellt my-app-v0.1.0
 ```
 
 ## 🏗️ Image Struktur

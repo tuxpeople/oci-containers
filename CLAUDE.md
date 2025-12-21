@@ -92,6 +92,8 @@ git commit -m "feat: add Discord notifications"
 
 ### Commit Message Format
 
+**CRITICAL:** Commit messages control automatic versioning!
+
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
@@ -102,20 +104,38 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 [optional footer]
 ```
 
-**Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation only
-- `chore`: Maintenance (deps, config)
-- `refactor`: Code restructuring
-- `test`: Test updates
-- `ci`: CI/CD changes
+**Types & Versioning:**
+
+| Type | Version Bump | Use Case |
+|------|--------------|----------|
+| `feat` | **Minor** (0.1.0 → 0.2.0) | New features |
+| `fix` | **Patch** (0.1.0 → 0.1.1) | Bug fixes |
+| `feat!` | **Major** (0.1.0 → 1.0.0) | Breaking changes |
+| `chore` | **Patch** | Dependencies, maintenance |
+| `docs` | None | Documentation only |
+| `refactor` | None | Code restructuring |
+| `test` | None | Test updates |
+| `ci` | None | CI/CD changes |
 
 **Scopes:**
+- `{image-name}`: Specific image changes (e.g., `nginx`, `postgres`)
 - `workflow`: GitHub Actions workflows
-- `{image-name}`: Specific image changes
 - `docs`: Documentation
 - `deps`: Dependencies
+
+### Breaking Changes
+
+For Major version bumps (1.0.0 → 2.0.0):
+
+```bash
+# Option 1: Exclamation mark
+feat(myapp)!: change authentication method
+
+# Option 2: BREAKING CHANGE in footer
+feat(myapp): change authentication method
+
+BREAKING CHANGE: API keys no longer supported, use OAuth2
+```
 
 ### Examples
 

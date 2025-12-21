@@ -93,19 +93,40 @@ Nach erfolgreichem Build:
 - **GHCR:** `ghcr.io/tuxpeople/my-app:latest`
 - **Docker Hub:** `docker.io/tdeutsch/my-app:latest`
 
-## 🏷️ Versionen taggen
+## 🏷️ Automatisches Versioning
+
+**Commit Messages steuern Versionen!**
 
 ```bash
-# Tag erstellen (image-name-vX.Y.Z)
-git tag my-app-v1.0.0
-git push --tags
+# Fix → Patch bump (1.0.0 → 1.0.1)
+git commit -m "fix(my-app): fix startup bug"
+
+# Feature → Minor bump (1.0.0 → 1.1.0)
+git commit -m "feat(my-app): add metrics endpoint"
+
+# Breaking Change → Major bump (1.0.0 → 2.0.0)
+git commit -m "feat(my-app)!: change API"
 ```
 
-Dies erzeugt:
-- `my-app:1.0.0`
-- `my-app:1.0`
+**Erster Commit erstellt `v0.1.0`:**
+
+```bash
+git commit -m "feat(my-app): add new container"
+# → Automatisch: my-app-v0.1.0
+```
+
+**Entstehende Tags:**
+
+Bei `my-app-v1.2.3`:
+- `my-app:1.2.3`
+- `my-app:1.2`
 - `my-app:1`
 - `my-app:latest`
+
+Ohne Release:
+- `my-app:main`
+- `my-app:sha-abc1234`
+- `my-app:nightly` (scheduled)
 
 ## 📚 Mehr Info
 

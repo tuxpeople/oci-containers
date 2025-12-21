@@ -115,19 +115,66 @@ cosign verify \
 - Provenance Attestation für Supply Chain Security
 - Verfügbar via Docker Buildx
 
-## 🔄 Updates
+## 🔄 Versioning & Updates
 
-### Automatisch via Renovate
+### Automatisches Versioning (Conventional Commits)
 
-Renovate überwacht:
+Die Pipeline erstellt **automatisch** Versionen basierend auf Commit Messages:
+
+| Commit Type | Version Bump | Beispiel |
+|-------------|--------------|----------|
+| `fix(my-app): ...` | **Patch** | 1.0.0 → 1.0.1 |
+| `feat(my-app): ...` | **Minor** | 1.0.0 → 1.1.0 |
+| `feat(my-app)!: ...` | **Major** | 1.0.0 → 2.0.0 |
+| `BREAKING CHANGE:` | **Major** | 1.0.0 → 2.0.0 |
+
+**Beispiel:**
+
+```bash
+# Fix erstellt v1.0.1
+git commit -m "fix(my-app): fix startup script"
+git push
+
+# Feature erstellt v1.1.0
+git commit -m "feat(my-app): add health endpoint"
+git push
+
+# Breaking Change erstellt v2.0.0
+git commit -m "feat(my-app)!: change API schema
+
+BREAKING CHANGE: API endpoint /v1 removed"
+git push
+```
+
+**Erstes Release:** Erster Commit erstellt automatisch `v0.1.0`
+
+### Image Tags
+
+Bei Release `my-app-v1.2.3` entstehen automatisch:
+- `my-app:1.2.3` (full version)
+- `my-app:1.2` (minor)
+- `my-app:1` (major)
+- `my-app:latest` (latest release)
+
+Bei Push zu `main` (ohne Release):
+- `my-app:main` (branch)
+- `my-app:sha-abc1234` (commit)
+
+Scheduled Builds (nightly):
+- `my-app:nightly`
+
+### Dependency Updates via Renovate
+
+Renovate überwacht automatisch:
 - Base Images (z.B. `alpine:3.19` → `alpine:3.20`)
 - GitHub Actions Versionen
 - Dependencies in Dockerfiles
 
-### Manuell
+### Manuelles Release (Optional)
+
+Falls du explizit eine Version setzen willst:
 
 ```bash
-# Bump version und release
 git tag my-app-v1.2.3
 git push --tags
 ```
