@@ -151,17 +151,22 @@ git push
 ### Image Tags
 
 Bei Release `my-app-v1.2.3` entstehen automatisch:
+- `my-app:latest` (neueste stabile Version)
 - `my-app:1.2.3` (full version)
-- `my-app:1.2` (minor)
-- `my-app:1` (major)
-- `my-app:latest` (latest release)
+- `my-app:1.2` (minor - floating)
+- `my-app:1` (major - floating)
 
 Bei Push zu `main` (ohne Release):
-- `my-app:main` (branch)
-- `my-app:sha-abc1234` (commit)
+- `my-app:main` (bleeding edge vom main branch)
+- `my-app:sha-abc1234` (commit hash)
 
 Scheduled Builds (nightly):
 - `my-app:nightly`
+
+**Wichtig:** 
+- `:latest` = Neueste **stabile** Version (nur bei Releases)
+- `:main` = Neuester **main** Branch (kann ungetestet sein)
+- `:1` und `:1.2` sind **floating tags** (werden bei neueren Versionen überschrieben)
 
 ### Dependency Updates via Renovate
 

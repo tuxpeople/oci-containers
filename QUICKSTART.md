@@ -118,15 +118,20 @@ git commit -m "feat(my-app): add new container"
 **Entstehende Tags:**
 
 Bei `my-app-v1.2.3`:
-- `my-app:1.2.3`
-- `my-app:1.2`
-- `my-app:1`
-- `my-app:latest`
+- `my-app:latest` (neueste stabile)
+- `my-app:1.2.3` (exakte Version)
+- `my-app:1.2` (floating minor)
+- `my-app:1` (floating major)
 
-Ohne Release:
-- `my-app:main`
-- `my-app:sha-abc1234`
+Ohne Release (nur Push):
+- `my-app:main` (bleeding edge)
+- `my-app:sha-abc1234` (commit)
 - `my-app:nightly` (scheduled)
+
+**Tipp:**
+- Production: `:1.2.3` oder `:1.2` (pinned)
+- Development: `:main` (neuester Code)
+- Stable: `:latest` (neueste Version)
 
 ## 📚 Mehr Info
 

@@ -291,17 +291,24 @@ docker run -it myimage /bin/bash
 ### Image Tagging Strategy
 
 **On Git Tag** `myapp-v1.2.3`:
-- `myapp:1.2.3`
-- `myapp:1.2`
-- `myapp:1`
-- `myapp:latest`
+- `myapp:latest` (latest stable release)
+- `myapp:1.2.3` (exact version)
+- `myapp:1.2` (minor - **floating**, updates to 1.2.4)
+- `myapp:1` (major - **floating**, updates to 1.3.0)
 
 **On Push to main:**
-- `myapp:main`
-- `myapp:sha-{short-sha}`
+- `myapp:main` (bleeding edge)
+- `myapp:sha-{short-sha}` (commit reference)
 
 **On Schedule:**
 - `myapp:nightly`
+
+**Important:**
+- `:latest` = Latest **stable** version (only on releases)
+- `:main` = Latest **main** branch (may be untested)
+- `:1` and `:1.2` are **floating** tags (overwritten by newer versions in same major/minor)
+- Production should use pinned tags (`:1.2.3` or `:1.2`)
+- Development can use `:main`
 
 ## 🤖 Working with AI Assistants
 
