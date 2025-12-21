@@ -108,16 +108,23 @@ images/my-app/
 # 1. Spezifische Tags
 FROM alpine:3.19  # ✅ GOOD
 
-# 2. OCI Labels
+# 2. OCI Labels (ALLE PFLICHT!)
 LABEL org.opencontainers.image.title="my-app"
 LABEL org.opencontainers.image.description="My application"
+LABEL org.opencontainers.image.vendor="tuxpeople"
+LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"
 
 # 3. Non-root user
 USER 1000
 
 # 4. Health Check (wenn App einen Port exposed)
 HEALTHCHECK --interval=30s CMD curl -f http://localhost:8080/ || exit 1
+
+# 5. CMD für Goss-Kompatibilität
+CMD ["sleep", "infinity"]
 ```
+
+**Hinweis:** Weitere Labels (created, revision, version, licenses, url) werden automatisch vom Workflow gesetzt.
 
 ## 🧪 Testing
 

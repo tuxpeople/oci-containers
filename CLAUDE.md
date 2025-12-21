@@ -189,9 +189,33 @@ git commit -m "feat(myapp): add myapp container image
 
 **MUST have:**
 - Specific base image tags (never `:latest`)
-- OCI labels (title, description, vendor)
+- **OCI labels (ALL REQUIRED):**
+  - `org.opencontainers.image.title`
+  - `org.opencontainers.image.description`
+  - `org.opencontainers.image.vendor="tuxpeople"`
+  - `org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"`
 - Non-root user (`USER 1000` or higher)
-- Health checks (if applicable)
+- `CMD ["sleep", "infinity"]` for Goss compatibility
+- Health checks (if image exposes ports)
+
+**Example:**
+```dockerfile
+FROM alpine:3.19
+
+# OCI Labels (ALLE PFLICHT!)
+LABEL org.opencontainers.image.title="my-app"
+LABEL org.opencontainers.image.description="My application"
+LABEL org.opencontainers.image.vendor="tuxpeople"
+LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"
+
+RUN apk add --no-cache bash
+
+USER 1000
+
+CMD ["sleep", "infinity"]
+```
+
+**Note:** Additional labels (created, revision, version, licenses, url) are set automatically by the build workflow.
 
 **SHOULD have:**
 - Multi-stage builds (for smaller images)

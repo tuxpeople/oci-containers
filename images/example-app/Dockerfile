@@ -10,6 +10,7 @@ FROM alpine:3.19
 LABEL org.opencontainers.image.title="example-app"
 LABEL org.opencontainers.image.description="Example application container"
 LABEL org.opencontainers.image.vendor="tuxpeople"
+LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"
 
 # Install packages
 RUN apk add --no-cache \

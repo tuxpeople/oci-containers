@@ -17,8 +17,11 @@ cd images/my-app
 ```dockerfile
 FROM alpine:3.19
 
+# OCI Labels (ALLE PFLICHT!)
 LABEL org.opencontainers.image.title="my-app"
 LABEL org.opencontainers.image.description="My awesome app"
+LABEL org.opencontainers.image.vendor="tuxpeople"
+LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"
 
 RUN apk add --no-cache bash curl
 

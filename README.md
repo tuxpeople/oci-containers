@@ -34,14 +34,17 @@ cd images/my-app
 ```dockerfile
 FROM alpine:3.19
 
+# OCI Labels (ALLE PFLICHT!)
 LABEL org.opencontainers.image.title="my-app"
 LABEL org.opencontainers.image.description="Meine App"
+LABEL org.opencontainers.image.vendor="tuxpeople"
+LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"
 
 RUN apk add --no-cache bash curl
 
 USER 1000
 
-CMD ["/bin/bash"]
+CMD ["sleep", "infinity"]
 ```
 
 ### 3. README.md erstellen
