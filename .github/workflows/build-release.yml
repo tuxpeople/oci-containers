@@ -39,7 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Required for detecting changed files
 
       - name: Detect changed images
         id: set-matrix
@@ -71,10 +71,10 @@ jobs:
     if: needs.detect-changes.outputs.has-changes == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
-      id-token: write  # For Cosign
-      security-events: write  # For Trivy SARIF
+      contents: write       # Required for creating tags and releases
+      packages: write       # Required for GHCR
+      id-token: write       # Required for Cosign
+      security-events: write  # Required for Trivy SARIF
     strategy:
       fail-fast: false
       matrix:
@@ -82,6 +82,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for github-tag-action to analyze commits
 
       # ==========================================
       # PRE-BUILD: Linting & Validation
