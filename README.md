@@ -10,7 +10,7 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 - ✅ **SBOM & Provenance** - Supply Chain Security
 - ✅ **Multi-Arch** - AMD64 & ARM64 Support
 - ✅ **Auto-Tagging** - Semantic Versioning via Git Tags
-- ✅ **Optional Goss Testing** - Runtime Validation
+- ✅ **Goss Testing** - Mandatory Runtime Validation
 - ✅ **Renovate** - Automatische Dependency Updates
 - ✅ **Dual Registry** - GHCR + Docker Hub
 
@@ -58,7 +58,7 @@ docker run -it ghcr.io/tuxpeople/my-app:latest
 \`\`\`
 ```
 
-### 4. Optional: Goss Tests
+### 4. Goss Tests erstellen (PFLICHT)
 
 Erstelle `goss.yaml` für automatische Tests:
 
@@ -70,6 +70,12 @@ package:
 command:
   bash --version:
     exit-status: 0
+```
+
+**Wichtig:** Container muss für Tests laufen:
+
+```dockerfile
+CMD ["sleep", "infinity"]  # Nicht CMD ["/bin/bash"]!
 ```
 
 ### 5. Commit & Push
@@ -232,8 +238,9 @@ Setup:
 
 ### Testing
 
-- ✅ Goss Tests für kritische Images
+- ✅ **Goss Tests für alle Images** - Keine Ausnahmen ohne Begründung
 - ✅ Health Checks definieren
+- ✅ Container muss laufen: `CMD ["sleep", "infinity"]`
 - ✅ Lokal testen vor Push
 
 ## 🐛 Troubleshooting

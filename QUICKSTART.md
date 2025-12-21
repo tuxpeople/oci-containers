@@ -24,7 +24,7 @@ RUN apk add --no-cache bash curl
 
 USER 1000
 
-CMD ["/bin/bash"]
+CMD ["sleep", "infinity"]
 ```
 
 ### 3. README erstellen
@@ -37,11 +37,30 @@ Short description of your app.
 ## Usage
 
 \`\`\`bash
-docker run -it ghcr.io/tuxpeople/my-app:latest
+docker run -it --rm ghcr.io/tuxpeople/my-app:latest /bin/bash
 \`\`\`
 ```
 
-### 4. Commit & Push
+### 4. Goss Tests (PFLICHT!)
+
+Erstelle `images/my-app/goss.yaml`:
+
+```yaml
+package:
+  bash:
+    installed: true
+
+command:
+  bash --version:
+    exit-status: 0
+```
+
+**Container CMD:**
+```dockerfile
+CMD ["sleep", "infinity"]  # Nicht /bin/bash!
+```
+
+### 5. Commit & Push
 
 ```bash
 git add images/my-app
@@ -73,20 +92,6 @@ Nach erfolgreichem Build:
 
 - **GHCR:** `ghcr.io/tuxpeople/my-app:latest`
 - **Docker Hub:** `docker.io/tdeutsch/my-app:latest`
-
-## 🎯 Optional: Goss Tests
-
-Erstelle `images/my-app/goss.yaml`:
-
-```yaml
-package:
-  bash:
-    installed: true
-
-command:
-  bash --version:
-    exit-status: 0
-```
 
 ## 🏷️ Versionen taggen
 

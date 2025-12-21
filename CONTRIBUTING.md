@@ -26,13 +26,13 @@ chore(image-name): update dependencies
 ```
 images/my-app/
 ├── Dockerfile       # REQUIRED
-└── README.md        # REQUIRED
+├── README.md        # REQUIRED
+└── goss.yaml        # REQUIRED
 ```
 
 **KANN haben:**
 ```
 images/my-app/
-├── goss.yaml        # Optional: Runtime tests
 ├── .trivyignore     # Optional: Ignore specific CVEs
 └── test.sh          # Optional: Custom tests
 ```
@@ -69,9 +69,28 @@ trivy image my-app:test
 # CRITICAL & HIGH müssen gefixt werden
 ```
 
-### Goss (Optional)
+### Goss (PFLICHT für alle Images)
+
+**Jedes Image MUSS `goss.yaml` haben!**
+
 ```bash
 GOSS_FILE=images/my-app/goss.yaml dgoss run my-app:test
+```
+
+**Minimum goss.yaml:**
+```yaml
+package:
+  bash:
+    installed: true
+    
+command:
+  bash --version:
+    exit-status: 0
+```
+
+**Wichtig:** Container CMD muss laufen:
+```dockerfile
+CMD ["sleep", "infinity"]  # NICHT CMD ["/bin/bash"]!
 ```
 
 ## 🔐 Security Guidelines
@@ -91,6 +110,7 @@ GOSS_FILE=images/my-app/goss.yaml dgoss run my-app:test
 - [ ] Dockerfile folgt Best Practices
 - [ ] Hadolint passed
 - [ ] Trivy hat keine CRITICAL/HIGH CVEs
+- [ ] **goss.yaml existiert und Tests passen**
 - [ ] README.md existiert
 - [ ] Lokal gebaut und getestet
 - [ ] Commit Messages folgen Conventional Commits

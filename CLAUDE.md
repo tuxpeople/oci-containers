@@ -207,29 +207,39 @@ CVE-2024-1234
 
 ## 🧪 Testing Standards
 
-### Minimal Testing (Required)
+### Mandatory Testing (Required for ALL Images)
 
-- Hadolint passes
-- Image builds successfully
-- Trivy scan completes (CRITICAL/HIGH = fail)
+1. **Hadolint** - Dockerfile linting must pass (errors fail build)
+2. **Image Build** - Must build successfully for all platforms
+3. **Trivy Scan** - No CRITICAL or HIGH CVEs (unless documented)
+4. **Goss Tests** - Runtime validation tests are **MANDATORY**
 
-### Optional Testing
+**Every image MUST have `goss.yaml`** unless technically impossible.
 
-**Goss Tests** - Add `goss.yaml` for:
+### Goss Test Requirements
+
+Create `images/{name}/goss.yaml` with at minimum:
 - Package installation verification
-- Service availability checks
-- Configuration validation
-- Port bindings
+- Basic command functionality
+- File existence checks
+- User/permission validation
 
-**IMPORTANT for Goss:** Container must stay running during tests.
+**Exception Policy:** Goss tests can only be omitted if:
+- Container has no packages to test (e.g., scratch-based)
+- Container requires external dependencies unavailable in CI
+- Technical limitation documented in image README
+
+**Container CMD for Goss:**
+
+Container must stay running during tests:
 
 ```dockerfile
-# ✅ GOOD - Container stays alive for Goss
+# ✅ REQUIRED - Container stays alive for Goss
 CMD ["sleep", "infinity"]
 # or
 CMD ["tail", "-f", "/dev/null"]
 
-# ❌ BAD - Container exits immediately
+# ❌ FORBIDDEN - Container exits immediately
 CMD ["/bin/bash"]  # Exits without interactive terminal
 ```
 
@@ -238,10 +248,13 @@ For interactive use, override CMD:
 docker run -it myimage /bin/bash
 ```
 
+### Additional Testing (Optional)
+
 **Custom Tests** - Add `test.sh` for:
 - Complex integration tests
-- Multi-container scenarios
-- Custom validation logic
+- Multi-container scenarios  
+- External service dependencies
+- Custom validation logic beyond Goss capabilities
 
 ## 🔄 Workflow Behavior
 
@@ -342,15 +355,23 @@ USER app
 ❌ No `USER` directive  
 ✅ `USER 1000`
 
-### 4. Ignoring Trivy CVEs
+### 4. Missing Goss Tests
+❌ No `goss.yaml` file  
+✅ Create `goss.yaml` with minimum tests
+
+### 5. Wrong CMD for Goss
+❌ `CMD ["/bin/bash"]` (exits immediately)  
+✅ `CMD ["sleep", "infinity"]` (stays running)
+
+### 6. Ignoring Trivy CVEs
 ❌ Ignoring without explanation  
 ✅ Document in `.trivyignore` with reason
 
-### 5. Breaking Changes Without Warning
+### 7. Breaking Changes Without Warning
 ❌ Change workflow behavior silently  
 ✅ Document in PR, update docs, consider migration path
 
-### 6. Complex Solutions
+### 8. Complex Solutions
 ❌ Over-engineering for one image  
 ✅ Keep it simple - ADHD-friendly is the goal!
 
@@ -361,10 +382,11 @@ Before submitting PR or committing:
 - [ ] Documentation updated?
 - [ ] Hadolint passes locally?
 - [ ] Image builds successfully?
+- [ ] **Goss tests created** (`goss.yaml` present)?
+- [ ] **Goss tests pass** locally (`dgoss run`)?
 - [ ] Commit message follows Conventional Commits?
 - [ ] No AI signatures in commits?
 - [ ] README.md reflects changes?
-- [ ] Tests pass (if applicable)?
 - [ ] No secrets in code?
 - [ ] Followed existing patterns?
 
