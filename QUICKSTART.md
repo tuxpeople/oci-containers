@@ -62,11 +62,18 @@ CMD ["sleep", "infinity"]  # Nicht /bin/bash!
 
 ### 5. Commit & Push
 
+**WICHTIG:** Verwende [Conventional Commits](https://www.conventionalcommits.org/)!
+
 ```bash
 git add images/my-app
 git commit -m "feat(my-app): add new container"
 git push
 ```
+
+**Commit Type steuert Versioning:**
+- `feat:` → Minor bump (0.1.0 → 0.2.0)
+- `fix:` → Patch bump (0.1.0 → 0.1.1)
+- `feat!:` → Major bump (0.1.0 → 1.0.0)
 
 **Fertig!** Die Pipeline baut, testet und veröffentlicht automatisch.
 

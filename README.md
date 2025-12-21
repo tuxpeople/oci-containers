@@ -273,6 +273,29 @@ Setup:
 
 ## 📝 Best Practices
 
+### Commit Messages (PFLICHT!)
+
+**ALLE Commits MÜSSEN** [Conventional Commits](https://www.conventionalcommits.org/) folgen!
+
+```bash
+<type>(<scope>): <subject>
+```
+
+**Warum:** Commit Messages steuern automatisches Versioning:
+- `feat:` → Minor bump (1.0.0 → 1.1.0)
+- `fix:` → Patch bump (1.0.0 → 1.0.1)  
+- `feat!:` → Major bump (1.0.0 → 2.0.0)
+- `docs:`, `ci:`, `test:`, `refactor:` → Kein bump
+
+**Beispiele:**
+```bash
+feat(nginx): add custom error pages
+fix(postgres): correct healthcheck timeout
+chore(deps): update alpine to 3.20
+```
+
+Mehr Details: [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ### Dockerfile
 
 - ✅ Immer spezifische Tags verwenden (`alpine:3.19` statt `alpine:latest`)
