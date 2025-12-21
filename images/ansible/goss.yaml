@@ -1,0 +1,29 @@
+---
+file:
+  /usr/bin/ansible:
+    exists: true
+    mode: "0755"
+  /usr/bin/ansible-playbook:
+    exists: true
+    mode: "0755"
+  /home/ansible:
+    exists: true
+    filetype: directory
+
+command:
+  ansible --version:
+    exit-status: 0
+    stdout:
+      - "ansible [core"
+    timeout: 10000
+  ansible-playbook --version:
+    exit-status: 0
+    stdout:
+      - "ansible-playbook [core"
+    timeout: 10000
+
+user:
+  ansible:
+    exists: true
+    home: "/home/ansible"
+    shell: "/bin/bash"
