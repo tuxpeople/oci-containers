@@ -113,25 +113,78 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
       # ==========================================
-      # METADATA: Tagging Strategy
+      # METADATA: Versioning Strategy (Hybrid)
       # ==========================================
+      # Images can use either:
+      # 1. Build Versioning (default): Conventional Commits auto-bump
+      # 2. Software Versioning (opt-in): get-version.sh extracts software version
 
-      - name: Bump version and push tag if needed
-        id: tag_version
-        if: github.event_name == 'push'
+      - name: Determine versioning strategy
+        id: version_strategy
+        run: |
+          if [[ -f "images/${{ matrix.image }}/get-version.sh" ]]; then
+            echo "strategy=software" >> $GITHUB_OUTPUT
+            chmod +x "images/${{ matrix.image }}/get-version.sh"
+            version=$(images/${{ matrix.image }}/get-version.sh)
+            echo "version=$version" >> $GITHUB_OUTPUT
+            echo "tag=${{ matrix.image }}-v${version}" >> $GITHUB_OUTPUT
+            echo "📦 Using software versioning: ${version}"
+          else
+            echo "strategy=build" >> $GITHUB_OUTPUT
+            echo "🔧 Using build versioning (Conventional Commits)"
+          fi
+
+      - name: Bump version (build strategy)
+        id: tag_version_build
+        if: github.event_name == 'push' && steps.version_strategy.outputs.strategy == 'build'
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
           tag_prefix: "${{ matrix.image }}-v"
 
+      - name: Create tag (software strategy)
+        id: tag_version_software
+        if: github.event_name == 'push' && steps.version_strategy.outputs.strategy == 'software'
+        run: |
+          TAG="${{ steps.version_strategy.outputs.tag }}"
+
+          # Check if tag already exists
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping creation"
+            echo "new_tag=" >> $GITHUB_OUTPUT
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG (software version ${{ steps.version_strategy.outputs.version }})"
+            git push origin "$TAG"
+            echo "new_tag=$TAG" >> $GITHUB_OUTPUT
+            echo "✅ Created and pushed tag: $TAG"
+          fi
+
+      - name: Consolidate version outputs
+        id: tag_version
+        run: |
+          if [[ "${{ steps.version_strategy.outputs.strategy }}" == "software" ]]; then
+            # For software versioning, always use the software version for Docker tags
+            # even if the git tag already exists
+            echo "new_tag=${{ steps.version_strategy.outputs.tag }}" >> $GITHUB_OUTPUT
+            echo "new_version=${{ steps.version_strategy.outputs.version }}" >> $GITHUB_OUTPUT
+            echo "release_created=${{ steps.tag_version_software.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
+          else
+            echo "new_tag=${{ steps.tag_version_build.outputs.new_tag }}" >> $GITHUB_OUTPUT
+            echo "new_version=${{ steps.tag_version_build.outputs.new_version }}" >> $GITHUB_OUTPUT
+            echo "release_created=${{ steps.tag_version_build.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create GitHub release if new version
         uses: softprops/action-gh-release@v2
-        if: steps.tag_version.outputs.new_tag
+        if: steps.tag_version.outputs.release_created == 'true'
         with:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           name: "Release ${{ steps.tag_version.outputs.new_tag }}"
-          body: ${{ steps.tag_version.outputs.changelog }}
+          body: |
+            ${{ steps.version_strategy.outputs.strategy == 'software' && format('Software version: {0}', steps.version_strategy.outputs.version) || steps.tag_version_build.outputs.changelog }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker meta

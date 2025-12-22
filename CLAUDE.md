@@ -31,8 +31,9 @@ oci-containers/
 │   └── {image-name}/
 │       ├── Dockerfile               # Required
 │       ├── README.md                # Required
-│       ├── goss.yaml               # Optional: Runtime tests
-│       └── .trivyignore            # Optional: CVE exceptions
+│       ├── goss.yaml                # Mandatory: Runtime tests
+│       ├── get-version.sh           # Optional: Software versioning (opt-in)
+│       └── .trivyignore             # Optional: CVE exceptions
 ├── .hadolint.yaml                   # Hadolint configuration
 ├── renovate.json                    # Dependency updates
 ├── README.md                        # Main documentation
@@ -182,6 +183,173 @@ git commit -m "feat(myapp): add myapp container image
 - Non-root user
 - Health checks included"
 ```
+
+## 📦 Image Versioning Strategies
+
+The repository supports **two versioning strategies** to accommodate different image types:
+
+### Strategy 1: Build Versioning (Default)
+
+**Use for:** Custom applications, tools, utilities
+
+**How it works:**
+- Versions are determined by **Conventional Commits**
+- Git commit messages control version bumps
+- Automatic semantic versioning (feat → minor, fix → patch)
+
+**Example:**
+```
+images/my-tool/
+├── Dockerfile
+├── README.md
+└── goss.yaml
+
+→ Tags: my-tool:0.1.0, my-tool:0.1, my-tool:0, my-tool:latest
+```
+
+**Commit examples:**
+```bash
+# Patch bump (0.1.0 → 0.1.1)
+git commit -m "fix(my-tool): resolve configuration bug"
+
+# Minor bump (0.1.1 → 0.2.0)
+git commit -m "feat(my-tool): add new export feature"
+```
+
+---
+
+### Strategy 2: Software Versioning (Opt-In)
+
+**Use for:** Images wrapping specific software versions (ansible, postgres, nginx, etc.)
+
+**How it works:**
+- Version is **extracted from the software** itself
+- Uses `get-version.sh` script to determine version
+- Tags match the software version exactly
+
+**Setup:**
+1. Create `images/{name}/get-version.sh`
+2. Make it executable (`chmod +x`)
+3. Script outputs semantic version (e.g., `13.1.0`)
+
+**Example:**
+```
+images/ansible/
+├── Dockerfile
+├── README.md
+├── goss.yaml
+├── requirements.txt
+└── get-version.sh  ← Opt-in trigger!
+
+→ Tags: ansible:13.1.0, ansible:13.1, ansible:13, ansible:latest
+```
+
+**`get-version.sh` example:**
+```bash
+#!/usr/bin/env bash
+# Extract Ansible version from requirements.txt
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+version=$(grep "^ansible==" "$SCRIPT_DIR/requirements.txt" | cut -d'=' -f3)
+
+if [[ -z "$version" ]]; then
+  echo "ERROR: Could not extract version" >&2
+  exit 1
+fi
+
+echo "${version}"
+```
+
+**More examples:**
+
+```bash
+# From Dockerfile base image
+#!/usr/bin/env bash
+grep "^FROM postgres:" Dockerfile | cut -d':' -f2 | cut -d'-' -f1
+
+# From package.json
+#!/usr/bin/env bash
+jq -r '.dependencies.webpack' package.json | sed 's/^[~^]//'
+
+# From binary --version output (in multi-stage build)
+#!/usr/bin/env bash
+docker run --rm myimage myapp --version | grep -oP 'v\K[\d.]+'
+```
+
+---
+
+### When to Use Which Strategy
+
+| Scenario | Strategy | Reason |
+|----------|----------|--------|
+| Custom application | Build Versioning | Version reflects code changes |
+| Wrapper for software | Software Versioning | Version matches wrapped software |
+| Internal tool | Build Versioning | Build iteration matters |
+| Ansible, nginx, postgres | Software Versioning | Users expect software version |
+| Multi-tool container | Build Versioning | No single version source |
+
+---
+
+### Workflow Behavior
+
+**Detection:**
+```yaml
+- name: Determine versioning strategy
+  run: |
+    if [[ -f "images/${{ matrix.image }}/get-version.sh" ]]; then
+      echo "📦 Using software versioning"
+    else
+      echo "🔧 Using build versioning"
+    fi
+```
+
+**Software Versioning:**
+- Executes `get-version.sh` to get version
+- Creates git tag `{image}-v{version}` (e.g., `ansible-v13.1.0`)
+- Tags Docker image with semantic versions
+- If git tag exists, skips tag creation but still builds image
+
+**Build Versioning:**
+- Analyzes commit history via Conventional Commits
+- Auto-bumps version based on commit types
+- Creates git tag and GitHub release
+- Tags Docker image with new version
+
+---
+
+### Best Practices
+
+1. **Keep `get-version.sh` simple:**
+   - Single source of truth
+   - Fast execution (< 1 second)
+   - Clear error messages
+
+2. **Document version source:**
+   - Add comment in script explaining extraction logic
+   - Update image README with versioning strategy
+
+3. **Test locally:**
+   ```bash
+   # Test the script
+   ./images/{name}/get-version.sh
+
+   # Should output clean version: 13.1.0
+   ```
+
+4. **Update software version:**
+   - For software-versioned images, update the version in source file
+   - Push change triggers automatic rebuild with new version
+
+   ```bash
+   # Example: Update Ansible version
+   sed -i 's/ansible==.*/ansible==14.0.0/' images/ansible/requirements.txt
+   git commit -m "feat(ansible): upgrade to 14.0.0"
+   git push
+   # → Creates ansible-v14.0.0 tag and builds image
+   ```
+
+---
 
 ## 🔐 Security Standards
 
