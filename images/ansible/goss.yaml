@@ -1,9 +1,9 @@
 ---
 file:
-  /usr/bin/ansible:
+  /usr/local/bin/ansible:
     exists: true
     mode: "0755"
-  /usr/bin/ansible-playbook:
+  /usr/local/bin/ansible-playbook:
     exists: true
     mode: "0755"
   /home/ansible:
