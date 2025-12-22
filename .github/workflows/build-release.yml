@@ -166,14 +166,16 @@ jobs:
         id: tag_version
         run: |
           if [[ "${{ steps.version_strategy.outputs.strategy }}" == "software" ]]; then
-            # For software versioning, always use the software version for Docker tags
-            # even if the git tag already exists
-            echo "new_tag=${{ steps.version_strategy.outputs.tag }}" >> $GITHUB_OUTPUT
+            # For software versioning, use version for Docker tags (without prefix)
+            # Use full tag (with prefix) for git tag and release
+            echo "new_tag=v${{ steps.version_strategy.outputs.version }}" >> $GITHUB_OUTPUT
             echo "new_version=${{ steps.version_strategy.outputs.version }}" >> $GITHUB_OUTPUT
+            echo "git_tag=${{ steps.version_strategy.outputs.tag }}" >> $GITHUB_OUTPUT
             echo "release_created=${{ steps.tag_version_software.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
           else
             echo "new_tag=${{ steps.tag_version_build.outputs.new_tag }}" >> $GITHUB_OUTPUT
             echo "new_version=${{ steps.tag_version_build.outputs.new_version }}" >> $GITHUB_OUTPUT
+            echo "git_tag=${{ steps.tag_version_build.outputs.new_tag }}" >> $GITHUB_OUTPUT
             echo "release_created=${{ steps.tag_version_build.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
           fi
 
@@ -181,8 +183,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: steps.tag_version.outputs.release_created == 'true'
         with:
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          name: "Release ${{ steps.tag_version.outputs.new_tag }}"
+          tag_name: ${{ steps.tag_version.outputs.git_tag }}
+          name: "Release ${{ steps.tag_version.outputs.git_tag }}"
           body: |
             ${{ steps.version_strategy.outputs.strategy == 'software' && format('Software version: {0}', steps.version_strategy.outputs.version) || steps.tag_version_build.outputs.changelog }}
           token: ${{ secrets.GITHUB_TOKEN }}
