@@ -4,7 +4,7 @@
 # This shows the minimal structure for an image in this repo
 
 # Base image - always use specific tags
-FROM alpine:3.19
+FROM alpine:3.24
 
 # Labels - required for OCI compliance
 LABEL org.opencontainers.image.title="example-app"
