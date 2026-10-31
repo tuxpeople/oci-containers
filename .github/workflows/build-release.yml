@@ -183,7 +183,7 @@ jobs:
           fi
 
       - name: Create GitHub release if new version
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: steps.tag_version.outputs.release_created == 'true'
         with:
           tag_name: ${{ steps.tag_version.outputs.git_tag }}
