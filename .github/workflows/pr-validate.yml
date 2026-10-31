@@ -77,20 +77,34 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build image (no push)
+      # The docker exporter behind `load: true` cannot store multi-platform
+      # images, so build all platforms first and then load only amd64 (from
+      # cache) for the scan and the tests.
+      - name: Build image for all platforms (no push)
         uses: docker/build-push-action@v7
         with:
           context: ./images/${{ matrix.image }}
           platforms: ${{ env.PLATFORMS }}
           push: false
-          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Load amd64 image for scanning and tests
+        uses: docker/build-push-action@v7
+        with:
+          context: ./images/${{ matrix.image }}
+          platforms: linux/amd64
+          push: false
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
+          cache-from: type=gha
           load: true
 
       - name: Install Trivy
+        env:
+          # renovate: datasource=github-releases depName=aquasecurity/trivy
+          TRIVY_VERSION: v0.76.1
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/${TRIVY_VERSION}/contrib/install.sh" | sh -s -- -b /usr/local/bin "${TRIVY_VERSION}"
 
       - name: Run Trivy vulnerability scanner
         run: |
@@ -99,11 +113,27 @@ jobs:
             --format table \
             ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
 
+      # goss v0.4.10 switched to tarball release assets, which
+      # e1himself/goss-installation-action cannot download.
       - name: Setup Goss
         if: hashFiles(format('images/{0}/goss.yaml', matrix.image)) != ''
-        uses: e1himself/goss-installation-action@v1
-        with:
-          version: latest
+        env:
+          # renovate: datasource=github-releases depName=goss-org/goss
+          GOSS_VERSION: v0.4.10
+        shell: bash
+        run: |
+          base="https://github.com/goss-org/goss/releases/download/${GOSS_VERSION}"
+          archive="goss_${GOSS_VERSION#v}_linux_x86_64.tar.gz"
+          cd "${RUNNER_TEMP}"
+          curl -fsSLO "${base}/${archive}"
+          curl -fsSLO "${base}/goss_${GOSS_VERSION#v}_SHA256SUMS"
+          sha256sum --check --ignore-missing "goss_${GOSS_VERSION#v}_SHA256SUMS"
+          curl -fsSLO "${base}/dgoss"
+          curl -fsSLO "${base}/dgoss.sha256"
+          sha256sum --check dgoss.sha256
+          tar -xzf "${archive}" goss
+          sudo install -m 0755 goss dgoss /usr/local/bin/
+          goss --version
 
       - name: Run Goss tests
         if: hashFiles(format('images/{0}/goss.yaml', matrix.image)) != ''
