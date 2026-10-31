@@ -37,7 +37,7 @@ jobs:
       has-changes: ${{ steps.set-matrix.outputs.has-changes }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required for detecting changed files
 
@@ -81,7 +81,7 @@ jobs:
         image: ${{ fromJSON(needs.detect-changes.outputs.matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Required for github-tag-action to analyze commits
 
