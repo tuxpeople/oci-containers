@@ -9,8 +9,6 @@ command:
     exit-status: 0
   oras version:
     exit-status: 0
-  oc version --client:
-    exit-status: 0
   kubectl version --client:
     exit-status: 0
   crane version:
@@ -40,7 +38,7 @@ file:
   /scripts/hdd-perf.sh:
     exists: true
     mode: "0755"
-  /etc/oc-version:
+  /etc/flux-version:
     exists: true
   /workdir:
     exists: true

@@ -16,8 +16,6 @@ ARG YTT_VERSION=v0.55.4
 ARG IMGPKG_VERSION=v0.49.0
 # renovate: datasource=github-releases depName=oras-project/oras
 ARG ORAS_VERSION=v1.3.6
-# renovate: datasource=custom.openshift-ocp depName=openshift/ocp versioning=semver
-ARG OC_VERSION=4.22.21
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache curl
@@ -46,18 +44,11 @@ RUN mkdir -p /out && \
     curl -fsSLO "${gh}/oras-project/oras/releases/download/${ORAS_VERSION}/${f}" && \
     curl -fsSL -o oras.sha256 "${gh}/oras-project/oras/releases/download/${ORAS_VERSION}/oras_${ORAS_VERSION#v}_checksums.txt" && \
     verify oras.sha256 "$f" && tar -xzf "$f" -C /out oras && \
-    # oc (only oc: kubectl comes from Alpine and stays current)
-    f="openshift-client-${TARGETOS}.tar.gz" && \
-    if [ "${TARGETARCH}" = "arm64" ]; then f="openshift-client-${TARGETOS}-arm64.tar.gz"; fi && \
-    base="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OC_VERSION}" && \
-    curl -fsSLO "${base}/${f}" && curl -fsSL -o oc.sha256 "${base}/sha256sum.txt" && \
-    verify oc.sha256 "$f" && tar -xzf "$f" -C /out oc && \
     chmod 0755 /out/* && \
     echo "${FLUX_VERSION}" > /out/flux-version && \
     echo "${YTT_VERSION}" > /out/ytt-version && \
     echo "${IMGPKG_VERSION}" > /out/imgpkg-version && \
-    echo "${ORAS_VERSION}" > /out/oras-version && \
-    echo "${OC_VERSION}" > /out/oc-version
+    echo "${ORAS_VERSION}" > /out/oras-version
 
 # azure-cli in a venv; build dependencies (Rust, headers) stay in this stage
 FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS python-builder
@@ -91,7 +82,7 @@ RUN apk upgrade --no-cache && \
       tmux tree vim wget which yq
 
 COPY --from=python-builder /opt/venv /opt/venv
-COPY --from=downloader /out/flux /out/ytt /out/imgpkg /out/oras /out/oc /usr/local/bin/
+COPY --from=downloader /out/flux /out/ytt /out/imgpkg /out/oras /usr/local/bin/
 # Tool versions for runtime inspection: /etc/<tool>-version
 COPY --from=downloader /out/*-version /etc/
 COPY --chmod=755 scripts/ /scripts/
