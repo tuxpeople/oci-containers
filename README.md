@@ -110,8 +110,10 @@ Der Workflow erkennt automatisch neue Images und baut sie.
 
 Jedes Image wird mit Trivy gescannt:
 - **CRITICAL & HIGH** Vulnerabilities werden gemeldet
+- Nur CVEs, für die es einen Fix gibt (`ignore-unfixed`)
 - Ergebnisse werden zu GitHub Security hochgeladen
 - SARIF Format für Code Scanning Integration
+- Ausnahmen pro Image in `images/<name>/.trivyignore.yaml` oder `.trivyignore`
 
 ### Image Signing
 
@@ -358,6 +360,8 @@ trivy image my-app:test
 # Erstelle images/my-app/.trivyignore:
 CVE-2024-1234
 ```
+
+Für pfadbasierte Ausnahmen (z.B. Secret-Fehlalarme) gibt es `images/my-app/.trivyignore.yaml`, siehe [images/ansible/.trivyignore.yaml](images/ansible/.trivyignore.yaml). Ist sie vorhanden, wird sie statt `.trivyignore` verwendet.
 
 ### Image nicht signiert
 

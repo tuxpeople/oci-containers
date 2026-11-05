@@ -119,10 +119,21 @@ jobs:
         run: |
           curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/${TRIVY_VERSION}/contrib/install.sh" | sh -s -- -b /usr/local/bin "${TRIVY_VERSION}"
 
+      # Same filters as in build-release.yml: only fixable CVEs, plus the
+      # per-image ignore file (.trivyignore.yaml or .trivyignore) if present
       - name: Run Trivy vulnerability scanner
         run: |
+          ignore=()
+          for f in .trivyignore.yaml .trivyignore; do
+            if [[ -f "images/${{ matrix.image }}/${f}" ]]; then
+              ignore=(--ignorefile "images/${{ matrix.image }}/${f}")
+              break
+            fi
+          done
           trivy image \
             --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            "${ignore[@]}" \
             --format table \
             ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
 

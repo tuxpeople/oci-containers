@@ -255,6 +255,21 @@ jobs:
       # SECURITY: Trivy Scan
       # ==========================================
 
+      # Per-image exceptions: images/<name>/.trivyignore.yaml (path-based,
+      # e.g. secret false positives) or images/<name>/.trivyignore (CVE IDs)
+      - name: Find Trivy ignore file
+        id: trivyignore
+        run: |
+          for f in .trivyignore.yaml .trivyignore; do
+            if [[ -f "images/${{ matrix.image }}/${f}" ]]; then
+              echo "file=images/${{ matrix.image }}/${f}" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
+
+      # limit-severities-for-sarif: without it the SARIF file contains ALL
+      # severities regardless of `severity`, flooding GitHub Security.
+      # ignore-unfixed: only report CVEs we can act on (a fix exists).
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -262,6 +277,9 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+          limit-severities-for-sarif: true
+          ignore-unfixed: true
+          trivyignores: ${{ steps.trivyignore.outputs.file }}
           exit-code: '0'  # Don't fail build, just report
 
       - name: Upload Trivy results to GitHub Security
@@ -276,6 +294,8 @@ jobs:
           image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
           format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
+          ignore-unfixed: true
+          trivyignores: ${{ steps.trivyignore.outputs.file }}
 
       # ==========================================
       # SIGNING: Cosign (Keyless)
