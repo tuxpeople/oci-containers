@@ -176,8 +176,12 @@ jobs:
             echo "git_tag=${{ steps.version_strategy.outputs.tag }}" >> $GITHUB_OUTPUT
             echo "release_created=${{ steps.tag_version_software.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
           else
-            echo "new_tag=${{ steps.tag_version_build.outputs.new_tag }}" >> $GITHUB_OUTPUT
-            echo "new_version=${{ steps.tag_version_build.outputs.new_version }}" >> $GITHUB_OUTPUT
+            # new_tag of github-tag-action carries the image prefix
+            # (e.g. myapp-v0.1.0), which docker/metadata-action cannot parse
+            # as semver, so no latest/X.Y.Z tags were created. Build v<version>.
+            new_version="${{ steps.tag_version_build.outputs.new_version }}"
+            echo "new_tag=${new_version:+v${new_version}}" >> $GITHUB_OUTPUT
+            echo "new_version=${new_version}" >> $GITHUB_OUTPUT
             echo "git_tag=${{ steps.tag_version_build.outputs.new_tag }}" >> $GITHUB_OUTPUT
             echo "release_created=${{ steps.tag_version_build.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
           fi
