@@ -1,9 +1,9 @@
 ---
 file:
-  /usr/local/bin/ansible:
+  /opt/venv/bin/ansible:
     exists: true
     mode: "0755"
-  /usr/local/bin/ansible-playbook:
+  /opt/venv/bin/ansible-playbook:
     exists: true
     mode: "0755"
   /home/ansible:

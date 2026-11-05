@@ -105,7 +105,7 @@ docker run -it --rm \
 
 ## Security
 
-- Runs as non-root user `ansible` (UID 1000)
+- Runs as non-root user `ansible` (UID 1001, Ubuntu already uses 1000 for its `ubuntu` user)
 - No secrets baked into image
 - Regular security scans with Trivy
 - Signed with Cosign
