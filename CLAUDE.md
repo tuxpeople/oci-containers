@@ -25,6 +25,7 @@ oci-containers/
 │   ├── workflows/
 │   │   ├── build-release.yml        # Golden Pipeline (main)
 │   │   ├── pr-validate.yml          # PR validation
+│   │   ├── cleanup-packages.yml     # Monthly GHCR cleanup
 │   │   └── auto-assign-issues.yaml  # Issue management
 │   ├── scripts/
 │   │   └── render-image-table.py    # Generates README image table
