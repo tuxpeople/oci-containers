@@ -7,12 +7,25 @@ on:
     paths:
       - "images/**"
       - ".github/workflows/**"
+      - ".github/scripts/**"
+      - "README.md"
 
 concurrency:
   group: ${{ github.head_ref }}-pr-validate
   cancel-in-progress: true
 
 jobs:
+  # The image table in README.md is generated from the Dockerfile labels,
+  # fail if someone added/renamed an image without re-rendering it
+  readme-table:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check README image table
+        run: python3 .github/scripts/render-image-table.py --check
+
   lint:
     runs-on: ubuntu-latest
     strategy:
