@@ -11,7 +11,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 COPY requirements.txt /
 
-# Install Ansible and dependencies
+# Install Ansible and dependencies into a virtualenv: pip cannot replace
+# Python packages that Ubuntu installed via apt (e.g. packaging on 26.04)
 # DL3008: Pin versions - We rely on Ubuntu 24.04 LTS base image versioning
 # DL3009: Clean apt cache - Done via rm -rf below
 # hadolint ignore=DL3008,DL3009
@@ -19,12 +20,15 @@ RUN apt-get update && \
   apt-get install --no-install-suggests --no-install-recommends --yes \
     gcc \
     python3-dev \
+    python3-venv \
     libkrb5-dev \
-    python3-pip \
     krb5-user && \
-  pip3 install --upgrade --disable-pip-version-check --no-cache-dir --break-system-packages -r /requirements.txt && \
+  python3 -m venv /opt/venv && \
+  /opt/venv/bin/pip install --disable-pip-version-check --no-cache-dir -r /requirements.txt && \
   rm -rf /var/lib/apt/lists/* && \
   useradd -ms /bin/bash ansible
+
+ENV PATH="/opt/venv/bin:$PATH"
 
 USER ansible
 WORKDIR /home/ansible
