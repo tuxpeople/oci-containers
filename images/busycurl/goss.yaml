@@ -1,0 +1,30 @@
+---
+file:
+  /usr/local/bin/curl:
+    exists: true
+    mode: "0755"
+  /etc/ssl/certs/ca-certificates.crt:
+    exists: true
+
+command:
+  # The curl binary must match the version the image was built for
+  # (ENV CURL_VERSION): the old image was tagged with the latest curl
+  # release but contained curl 8.11.0
+  curl --version:
+    exit-status: 0
+    stdout:
+      - "/^curl {{.Env.CURL_VERSION}} /"
+      - "OpenSSL"
+      - "libssh2"
+      - "nghttp2"
+    timeout: 5000
+  # HTTPS works with the bundled CA certificates
+  curl -fsS -o /dev/null -w "%{http_code}" https://curl.se/:
+    exit-status: 0
+    stdout:
+      - "200"
+    timeout: 30000
+  id -u:
+    exit-status: 0
+    stdout:
+      - "65534"
