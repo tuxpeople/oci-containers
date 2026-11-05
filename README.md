@@ -16,9 +16,13 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 
 ## 📦 Verfügbare Images
 
+<!-- Generated from the Dockerfile labels, run: python3 .github/scripts/render-image-table.py -->
+<!-- images-table:start -->
 | Image | Description | Registries |
 |-------|-------------|------------|
-| [example-app](./images/example-app) | Example container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
+| [ansible](./images/ansible) | Ansible automation container with Kerberos support | [GHCR](https://ghcr.io/tuxpeople/ansible) • [Docker Hub](https://hub.docker.com/r/tdeutsch/ansible) |
+| [example-app](./images/example-app) | Example application container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
+<!-- images-table:end -->
 
 ## 🚀 Neues Image hinzufügen
 
@@ -81,7 +85,15 @@ command:
 CMD ["sleep", "infinity"]  # Nicht CMD ["/bin/bash"]!
 ```
 
-### 5. Commit & Push
+### 5. Image-Tabelle aktualisieren
+
+Die Tabelle unter „Verfügbare Images“ wird aus dem Label `org.opencontainers.image.description` der Dockerfiles generiert. Der PR-Check schlägt fehl, wenn sie veraltet ist:
+
+```bash
+python3 .github/scripts/render-image-table.py
+```
+
+### 6. Commit & Push
 
 ```bash
 git add images/my-app
