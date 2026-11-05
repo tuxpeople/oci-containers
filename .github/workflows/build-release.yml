@@ -128,15 +128,23 @@ jobs:
       # ==========================================
       # Images can use either:
       # 1. Build Versioning (default): Conventional Commits auto-bump
-      # 2. Software Versioning (opt-in): get-version.sh extracts software version
+      # 2. Software Versioning (opt-in): get-version.sh prints the software
+      #    version, e.g. from requirements.txt or the latest upstream release
+      #    (GITHUB_TOKEN is available to avoid the API rate limit)
 
       - name: Determine versioning strategy
         id: version_strategy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ -f "images/${{ matrix.image }}/get-version.sh" ]]; then
             echo "strategy=software" >> $GITHUB_OUTPUT
             chmod +x "images/${{ matrix.image }}/get-version.sh"
             version=$(images/${{ matrix.image }}/get-version.sh)
+            if [[ -z "$version" || "$version" == "null" ]]; then
+              echo "::error::get-version.sh returned no version"
+              exit 1
+            fi
             echo "version=$version" >> $GITHUB_OUTPUT
             echo "tag=${{ matrix.image }}-v${version}" >> $GITHUB_OUTPUT
             echo "📦 Using software versioning: ${version}"
@@ -159,6 +167,10 @@ jobs:
           dry_run: true
 
       # new_tag:         v<version> for docker/metadata-action (semver, no prefix)
+      # new_version:     the plain version, also passed as VERSION build-arg
+      # semver:          true for X.Y.Z, false for anything else (git-abc1234,
+      #                  1.38.0-musl+8.23.0); those get a raw tag plus latest
+      # docker_version:  new_version as a valid docker tag (+ becomes -)
       # git_tag:         <image>-v<version> for the git tag and the GitHub release
       # release_created: whether this run creates a new git tag and release
       - name: Consolidate version outputs
@@ -181,14 +193,23 @@ jobs:
             version="${latest#"${IMAGE}"-v}"
           fi
 
-          git_tag="${version:+${IMAGE}-v${version}}"
+          git_tag="${version:+${IMAGE}-v${version//+/-}}"
+          # Build versions only change with a push. Software versions also
+          # change when upstream releases, which a nightly build picks up.
           release_created=false
-          if [[ "$EVENT" == "push" && -n "$git_tag" ]] && ! git rev-parse -q --verify "refs/tags/${git_tag}" >/dev/null; then
-            release_created=true
+          if [[ -n "$git_tag" ]] && ! git rev-parse -q --verify "refs/tags/${git_tag}" >/dev/null; then
+            if [[ "$EVENT" == "push" || "$STRATEGY" == "software" ]]; then
+              release_created=true
+            fi
           fi
+
+          semver=false
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && semver=true
 
           echo "new_tag=${version:+v${version}}" >> $GITHUB_OUTPUT
           echo "new_version=${version}" >> $GITHUB_OUTPUT
+          echo "semver=${semver}" >> $GITHUB_OUTPUT
+          echo "docker_version=${version//+/-}" >> $GITHUB_OUTPUT
           echo "git_tag=${git_tag}" >> $GITHUB_OUTPUT
           echo "release_created=${release_created}" >> $GITHUB_OUTPUT
           echo "📦 ${STRATEGY} versioning: version='${version}' git_tag='${git_tag}' release=${release_created}"
@@ -204,12 +225,17 @@ jobs:
             type=schedule,pattern=nightly
             type=ref,event=branch
             type=ref,event=pr
-            # {{version}} first: metadata-action takes the first tag as the
-            # org.opencontainers.image.version label (was "latest")
-            type=semver,pattern={{version}},value=${{ steps.tag_version.outputs.new_tag }}
-            type=semver,pattern=latest,value=${{ steps.tag_version.outputs.new_tag }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag_version.outputs.new_tag }}
-            type=semver,pattern={{major}},value=${{ steps.tag_version.outputs.new_tag }}
+            # metadata-action uses the tag with the highest priority as the
+            # org.opencontainers.image.version label; without priority=2000 it
+            # would be "nightly" (schedule has 1000) or "latest"
+            type=semver,pattern={{version}},value=${{ steps.tag_version.outputs.new_tag }},enable=${{ steps.tag_version.outputs.semver == 'true' }},priority=2000
+            type=semver,pattern=latest,value=${{ steps.tag_version.outputs.new_tag }},enable=${{ steps.tag_version.outputs.semver == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag_version.outputs.new_tag }},enable=${{ steps.tag_version.outputs.semver == 'true' }}
+            type=semver,pattern={{major}},value=${{ steps.tag_version.outputs.new_tag }},enable=${{ steps.tag_version.outputs.semver == 'true' }}
+            # Versions that are not X.Y.Z (git-abc1234, 1.38.0-musl+8.23.0):
+            # the version itself plus latest, no floating major/minor tags
+            type=raw,value=${{ steps.tag_version.outputs.docker_version }},enable=${{ steps.tag_version.outputs.semver == 'false' && steps.tag_version.outputs.docker_version != '' }},priority=2000
+            type=raw,value=latest,enable=${{ steps.tag_version.outputs.semver == 'false' && steps.tag_version.outputs.docker_version != '' }}
             type=sha
           labels: |
             org.opencontainers.image.title=${{ matrix.image }}
@@ -242,6 +268,8 @@ jobs:
           push: false
           load: true
           tags: local/${{ matrix.image }}:test
+          build-args: |
+            VERSION=${{ steps.tag_version.outputs.new_version }}
           cache-from: type=gha
 
       # goss v0.4.10 switched to tarball release assets, which
@@ -315,6 +343,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.tag_version.outputs.new_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           sbom: true

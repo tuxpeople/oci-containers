@@ -278,7 +278,28 @@ jq -r '.dependencies.webpack' package.json | sed 's/^[~^]//'
 # From binary --version output (in multi-stage build)
 #!/usr/bin/env bash
 docker run --rm myimage myapp --version | grep -oP 'v\K[\d.]+'
+
+# Latest upstream GitHub release (GITHUB_TOKEN is set in CI, avoids the rate limit)
+#!/usr/bin/env bash
+set -euo pipefail
+curl -fsSL ${GITHUB_TOKEN:+-H "Authorization: Bearer ${GITHUB_TOKEN}"} \
+  https://api.github.com/repos/carvel-dev/imgpkg/releases/latest | jq -r '.tag_name | ltrimstr("v")'
 ```
+
+**Upstream releases:** when `get-version.sh` reads the latest upstream release,
+the nightly build picks up a new version on its own: it builds it, pushes the
+version tags and creates the git tag and GitHub release (`{image}-v{version}`).
+
+**`VERSION` build-arg:** the version is passed to the Dockerfile, e.g. to
+download that exact release:
+
+```dockerfile
+ARG VERSION
+RUN curl -fsSL -o /tmp/app "https://github.com/owner/app/releases/download/v${VERSION}/app-${TARGETOS}-${TARGETARCH}"
+```
+
+**Non-semver versions** (`git-abc1234`, `1.38.0-musl+8.23.0`) get the version
+itself (with `+` replaced by `-`) and `latest`, but no floating `X.Y`/`X` tags.
 
 ---
 
@@ -376,7 +397,7 @@ version tags again, so base image updates reach `latest` users.
   - `org.opencontainers.image.vendor="tuxpeople"`
   - `org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"`
 - Non-root user (`USER 1000` or higher)
-- `CMD ["sleep", "infinity"]` for Goss compatibility
+- `CMD ["sleep", "infinity"]` for Goss compatibility (CLI/tool images; services start normally, see Testing Standards)
 - Health checks (if image exposes ports)
 
 **Example:**
@@ -465,7 +486,11 @@ Create `images/{name}/goss.yaml` with at minimum:
 
 **Container CMD for Goss:**
 
-Container must stay running during tests:
+dgoss starts the container with its default command and runs the tests in it.
+**Services** (web apps, exporters, daemons) keep running on their own: test
+their ports, processes or HTTP endpoints, no `sleep` needed.
+
+**CLI/tool images** would exit immediately, so they must stay running:
 
 ```dockerfile
 # ✅ REQUIRED - Container stays alive for Goss
@@ -604,7 +629,8 @@ USER app
 
 ### 5. Wrong CMD for Goss
 ❌ `CMD ["/bin/bash"]` (exits immediately)  
-✅ `CMD ["sleep", "infinity"]` (stays running)
+✅ `CMD ["sleep", "infinity"]` (stays running) for CLI/tool images
+✅ Services keep their normal CMD and are tested via ports/processes/HTTP
 
 ### 6. Ignoring Trivy CVEs
 ❌ Ignoring without explanation  
