@@ -9,7 +9,7 @@ Ansible automation container with Kerberos and Windows (WinRM) support.
 - **WinRM Support** for Windows automation
 - **Multi-Architecture** support (amd64, arm64)
 - **Non-root user** (ansible)
-- Based on Ubuntu 24.04 LTS
+- Based on Ubuntu 26.04 LTS
 
 ## Usage
 

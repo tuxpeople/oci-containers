@@ -322,7 +322,8 @@ docker run --rm myimage myapp --version | grep -oP 'v\K[\d.]+'
 **Order (both strategies):** the version is only computed up front. The image
 is built for amd64 and tested (Goss) first, then pushed, scanned and signed;
 the git tag and GitHub release are created last. A failed test therefore
-publishes nothing and leaves no release behind.
+publishes nothing and leaves no release behind. Builds of the same image are
+queued (`concurrency`), so an older commit can never overwrite newer tags.
 
 **Nightly / manual builds** don't bump versions: they rebuild the latest
 released version (latest `{image}-v*` git tag) and push `latest` and the
@@ -398,6 +399,7 @@ CMD ["sleep", "infinity"]
 **Note:** Additional labels (created, revision, version, licenses, url) are set automatically by the build workflow.
 
 **SHOULD have:**
+- Security updates in the runtime stage (`apt-get upgrade` / `apk upgrade`): distributions fix CVEs in their archives weeks before they refresh the base image tag
 - Multi-stage builds: build dependencies (compilers, `-dev` packages) only in the build stage, for smaller images and far fewer CVE findings (see `images/ansible`, `images/python-k8s-runner`)
 - Minimal package installations
 - No unnecessary tools
