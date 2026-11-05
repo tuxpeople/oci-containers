@@ -180,10 +180,11 @@ Bei Push zu `main` (ohne Release):
 
 Scheduled Builds (nightly):
 - `my-app:nightly`
+- `my-app:latest`, `my-app:1.2.3`, `my-app:1.2`, `my-app:1` werden für die zuletzt veröffentlichte Version neu gebaut (neues Base Image)
 
 **Wichtig:** 
-- `:latest` = Neueste **stabile** Version (nur bei Releases)
-- `:main` = Neuester **main** Branch (kann ungetestet sein)
+- `:latest` = Neueste **stabile** Version (Releases, nightly neu gebaut)
+- `:main` = Neuester **main** Branch (vor dem Push mit Goss auf amd64 getestet)
 - `:1` und `:1.2` sind **floating tags** (werden bei neueren Versionen überschrieben)
 
 ### Dependency Updates via Renovate
