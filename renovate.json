@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "assignees": ["tuxpeople"],
+  "assignees": [
+    "tuxpeople"
+  ],
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests"
@@ -15,38 +17,58 @@
   "schedule": [
     "on saturday"
   ],
-  "docker": {
-    "enabled": true,
-    "pinDigests": false
-  },
   "dockerfile": {
     "enabled": true
   },
-  "regexManagers": [
-    {
-      "description": "Process custom dependencies in Dockerfiles",
-      "fileMatch": [
-        "(^|/|\\.)Dockerfile$",
-        "(^|/)Dockerfile\\.[^/]*$"
-      ],
-      "matchStrings": [
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( versioning=(?<versioning>\\S+))?\n.*?(?:FROM|ENV) .*?(?<currentValue>\\S+)"
-      ],
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}",
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-    }
-  ],
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Versions annotated with a `# renovate:` comment in workflows",
+      "description": "Versions annotated with a `# renovate:` comment in workflows and Dockerfiles",
       "managerFilePatterns": [
-        "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/"
+        "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/",
+        "/(^|/)Dockerfile[^/]*$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*[A-Za-z0-9_-]+\\s*:\\s*[\"']?(?<currentValue>[^\\s\"']+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:ARG\\s+|ENV\\s+)?[A-Za-z0-9_-]+\\s*[:=]\\s*[\"']?(?<currentValue>[^\\s\"']+)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver-coerced{{/if}}"
     }
-  ]
+  ],
+  "packageRules": [
+    {
+      "matchCategories": [
+        "docker"
+      ],
+      "enabled": true,
+      "pinDigests": false
+    },
+    {
+      "description": "Automerge patch, minor and digest updates once the PR checks (Hadolint, build, Trivy, Goss) pass",
+      "matchUpdateTypes": [
+        "patch",
+        "minor",
+        "digest",
+        "pinDigest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Major updates need a manual review",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Wait 3 days before proposing new releases, so a compromised or broken release can be pulled first. Docker digests have no release timestamp and are excluded.",
+      "matchDatasources": [
+        "pypi",
+        "github-releases",
+        "github-tags",
+        "github-digest"
+      ],
+      "minimumReleaseAge": "3 days"
+    }
+  ],
+  "platformAutomerge": false
 }

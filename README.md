@@ -117,21 +117,33 @@ Jedes Image wird mit Trivy gescannt:
 
 ### Image Signing
 
-Alle Images werden mit Cosign (keyless) signiert:
+Alle Images werden mit Cosign (keyless) signiert. Die Pipeline prüft die Signatur direkt nach dem Signieren.
 
 ```bash
-# Verify image signature
+# Verify image signature (nur Signaturen aus dem Build-Workflow dieses Repos auf main)
 cosign verify \
-  --certificate-identity-regexp="https://github.com/tuxpeople" \
+  --certificate-identity="https://github.com/tuxpeople/oci-containers/.github/workflows/build-release.yml@refs/heads/main" \
   --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
   ghcr.io/tuxpeople/my-app:latest
 ```
 
 ### SBOM & Provenance
 
-- SBOM wird automatisch generiert
-- Provenance Attestation für Supply Chain Security
-- Verfügbar via Docker Buildx
+- Signierte Build Provenance und SBOM (SPDX) als GitHub Attestations, auch in GHCR abgelegt
+- Zusätzlich die (unsignierte) SBOM und Provenance von Docker Buildx im Image Index
+
+```bash
+# Provenance prüfen
+gh attestation verify oci://ghcr.io/tuxpeople/my-app:latest --owner tuxpeople
+
+# SBOM prüfen
+gh attestation verify oci://ghcr.io/tuxpeople/my-app:latest --owner tuxpeople \
+  --predicate-type https://spdx.dev/Document/v2.3
+```
+
+### Aufräumen (GHCR)
+
+`cleanup-packages.yml` räumt monatlich alle Packages auf: Versionen ohne Tag, `sha-*` Tags und verwaiste Signaturen/Attestations, jeweils älter als 30 Tage. Multi-Arch Images bleiben intakt. Manuell gestartet läuft der Workflow standardmässig als Dry Run.
 
 ## 🔄 Versioning & Updates
 
@@ -191,8 +203,11 @@ Scheduled Builds (nightly):
 
 Renovate überwacht automatisch:
 - Base Images (z.B. `alpine:3.19` → `alpine:3.20`)
-- GitHub Actions Versionen
-- Dependencies in Dockerfiles
+- GitHub Actions (per Commit-SHA gepinnt)
+- Dependencies in Dockerfiles und `requirements.txt`
+- Mit `# renovate: datasource=… depName=…` annotierte Versionen in Workflows und Dockerfiles
+
+Patch-, Minor- und Digest-Updates werden automatisch gemergt, sobald die PR-Checks (Hadolint, Build, Trivy, Goss) grün sind. Major-Updates brauchen ein Review. Neue Releases von PyPI und GitHub werden erst nach 3 Tagen vorgeschlagen.
 
 ### Manuelles Release (Optional)
 

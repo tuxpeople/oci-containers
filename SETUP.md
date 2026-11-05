@@ -43,6 +43,11 @@ Bevor du pushen kannst:
 2. **GITHUB_TOKEN**
    - ✅ Automatisch verfügbar
 
+3. **Package-Berechtigung für das Aufräumen** (pro Image, nach dem ersten Push)
+   - Gehe zu: https://github.com/users/tuxpeople/packages/container/<image>/settings
+   - "Manage Actions access" → Repository `oci-containers` mit Rolle **Admin**
+   - Ohne Admin-Rolle kann `cleanup-packages.yml` keine Versionen löschen
+
 ## 🚀 Nächste Schritte
 
 ### 1. Check Files

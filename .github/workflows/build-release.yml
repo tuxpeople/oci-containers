@@ -73,8 +73,10 @@ jobs:
     permissions:
       contents: write       # Required for creating tags and releases
       packages: write       # Required for GHCR
-      id-token: write       # Required for Cosign
+      id-token: write       # Required for Cosign and attestations
       security-events: write  # Required for Trivy SARIF
+      attestations: write   # Required for GitHub attestations
+      artifact-metadata: write  # Required for the attestation storage record
     strategy:
       fail-fast: false
       matrix:
@@ -351,6 +353,47 @@ jobs:
             images+=("${tag}@${DIGEST}")
           done <<< "$TAGS"
           cosign sign --yes "${images[@]}"
+
+      # Fails right away if signing silently produced nothing usable. The
+      # identity is this exact workflow on this ref, the same check users run.
+      - name: Verify signature
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign verify \
+            --certificate-identity "https://github.com/${{ github.workflow_ref }}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}" \
+            > /dev/null
+          echo "✅ Signature verified"
+
+      # ==========================================
+      # ATTESTATIONS: signed provenance + SBOM (gh attestation verify)
+      # ==========================================
+      # BuildKit already attaches an SBOM and provenance to the image, but
+      # unsigned. These are signed via Sigstore and stored in GitHub and GHCR.
+
+      - name: Generate SBOM
+        if: github.event_name != 'pull_request'
+        run: |
+          trivy image --quiet --format spdx-json --output sbom.spdx.json \
+            "${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}"
+
+      - name: Attest build provenance
+        if: github.event_name != 'pull_request'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest SBOM
+        if: github.event_name != 'pull_request'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: sbom.spdx.json
+          push-to-registry: true
 
       # ==========================================
       # RELEASE: Git tag + GitHub release (only after a successful push)
