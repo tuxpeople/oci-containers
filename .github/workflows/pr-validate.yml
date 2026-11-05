@@ -90,6 +90,25 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
+      # Same VERSION build-arg as build-release.yml for software-versioned
+      # images (e.g. Dockerfiles that download a specific upstream release)
+      - name: Determine version
+        id: version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          script="images/${{ matrix.image }}/get-version.sh"
+          if [[ -f "$script" ]]; then
+            chmod +x "$script"
+            version=$("$script")
+            if [[ -z "$version" || "$version" == "null" ]]; then
+              echo "::error::get-version.sh returned no version"
+              exit 1
+            fi
+            echo "version=${version}" >> $GITHUB_OUTPUT
+            echo "📦 VERSION=${version}"
+          fi
+
       # The docker exporter behind `load: true` cannot store multi-platform
       # images, so build all platforms first and then load only amd64 (from
       # cache) for the scan and the tests.
@@ -99,6 +118,8 @@ jobs:
           context: ./images/${{ matrix.image }}
           platforms: ${{ env.PLATFORMS }}
           push: false
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -109,6 +130,8 @@ jobs:
           platforms: linux/amd64
           push: false
           tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
           load: true
 

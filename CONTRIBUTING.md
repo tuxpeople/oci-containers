@@ -120,9 +120,13 @@ USER 1000
 # 4. Health Check (wenn App einen Port exposed)
 HEALTHCHECK --interval=30s CMD curl -f http://localhost:8080/ || exit 1
 
-# 5. CMD für Goss-Kompatibilität
+# 5. CMD für Goss-Kompatibilität (CLI/Tool-Images)
 CMD ["sleep", "infinity"]
 ```
+
+Services (Web-Apps, Exporter, Daemons) behalten ihr normales `CMD`: Sie laufen von selbst weiter, Goss testet Ports, Prozesse oder HTTP-Endpunkte.
+
+**Upstream-Software:** `get-version.sh` darf die neueste Upstream-Version abfragen (in CI ist `GITHUB_TOKEN` gesetzt). Die Version steht im Dockerfile als `ARG VERSION` zur Verfügung, und der nächtliche Build erstellt bei einer neuen Upstream-Version automatisch Image, Git-Tag und Release.
 
 **Hinweis:** Weitere Labels (created, revision, version, licenses, url) werden automatisch vom Workflow gesetzt.
 
