@@ -1,0 +1,18 @@
+# Trivy ignore file for the ansible image
+# https://trivy.dev/latest/docs/configuration/filtering/#trivyignoreyaml
+
+secrets:
+  # Reason: Example values in the EXAMPLES documentation of Ansible modules
+  # (e.g. "access_key: AKIA1EXAMPLE1EXAMPLE" in community.aws.sts_session_token,
+  # example certificate keys in google.cloud and netapp.storagegrid, an example
+  # token in azure.azcollection). They are not real credentials.
+  # The python3.* wildcard covers the Python version of the Ubuntu base.
+  - id: aws-access-key-id
+    paths:
+      - "/opt/venv/lib/python3.*/site-packages/ansible_collections/**"
+  - id: private-key
+    paths:
+      - "/opt/venv/lib/python3.*/site-packages/ansible_collections/**"
+  - id: jwt-token
+    paths:
+      - "/opt/venv/lib/python3.*/site-packages/ansible_collections/**"
