@@ -126,6 +126,30 @@ CMD ["sleep", "infinity"]
 
 **Hinweis:** Weitere Labels (created, revision, version, licenses, url) werden automatisch vom Workflow gesetzt.
 
+### SOLLTE: Multi-stage Build bei Build-Abhängigkeiten
+
+Braucht ein Image zum Bauen Compiler oder `-dev` Pakete (z.B. für Python-Pakete mit C-Erweiterungen), gehören diese in eine eigene Build-Stage. Im Runtime-Image ziehen sie Pakete wie `linux-libc-dev` und `binutils` mit, die zur Laufzeit nie gebraucht werden, aber tausende Trivy-Treffer erzeugen.
+
+```dockerfile
+# Build-Stage: Compiler und Header
+FROM ubuntu:24.04 AS build
+RUN apt-get update && \
+  apt-get install --no-install-recommends --yes gcc python3-dev python3-venv && \
+  python3 -m venv /opt/venv && \
+  /opt/venv/bin/pip install --no-cache-dir -r /requirements.txt && \
+  /opt/venv/bin/pip uninstall --yes pip
+
+# Runtime-Stage: gleiche Base, nur was zur Laufzeit gebraucht wird
+FROM ubuntu:24.04
+RUN apt-get update && \
+  apt-get install --no-install-recommends --yes python3 && \
+  rm -rf /var/lib/apt/lists/*
+COPY --from=build /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+```
+
+Beide Stages müssen dieselbe Base verwenden, weil das venv gegen das `python3` der Base gebaut ist. Beispiele: [images/ansible](images/ansible/Dockerfile) (Ubuntu) und [images/python-k8s-runner](images/python-k8s-runner/Dockerfile) (Chainguard, distroless).
+
 ## 🧪 Testing
 
 ### Hadolint (Pflicht)
