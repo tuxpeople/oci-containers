@@ -4,7 +4,7 @@
 # They stay in this stage: gcc pulls in linux-libc-dev and binutils, which
 # alone caused thousands of (unfixable, irrelevant) Trivy findings at runtime.
 # Both stages must use the same base, the venv links against its python3.
-FROM ubuntu:24.04 AS build
+FROM ubuntu:26.04 AS build
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -25,7 +25,7 @@ RUN apt-get update && \
   /opt/venv/bin/pip install --disable-pip-version-check --no-cache-dir -r /requirements.txt && \
   /opt/venv/bin/pip uninstall --yes pip
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # OCI Labels
 LABEL org.opencontainers.image.title="ansible"
