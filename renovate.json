@@ -14,9 +14,6 @@
     "prIgnoreNotification"
   ],
   "rebaseWhen": "conflicted",
-  "schedule": [
-    "on saturday"
-  ],
   "dockerfile": {
     "enabled": true
   },
