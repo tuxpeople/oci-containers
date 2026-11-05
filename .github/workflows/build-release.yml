@@ -301,6 +301,12 @@ jobs:
           GOSS_OPTS: --retry-timeout 60s --sleep 2s --color --format documentation
         run: dgoss run local/${{ matrix.image }}:test
 
+      # For images that Goss cannot test (no shell, e.g. distroless):
+      # images/<name>/test.sh gets the image reference and tests it from outside
+      - name: Run test.sh
+        if: hashFiles(format('images/{0}/test.sh', matrix.image)) != ''
+        run: bash images/${{ matrix.image }}/test.sh local/${{ matrix.image }}:test
+
       - name: Run Trivy (Table Output)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
