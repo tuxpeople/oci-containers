@@ -484,6 +484,12 @@ Create `images/{name}/goss.yaml` with at minimum:
 - Container requires external dependencies unavailable in CI
 - Technical limitation documented in image README
 
+**Images without a shell (distroless):** dgoss cannot run in them. Add an
+executable `images/{name}/test.sh` instead: the workflows call it with the
+image reference as first argument (`test.sh <image>`) after the local build,
+before anything is pushed. Test from outside, e.g. `docker run --rm "$1" --version`
+or start the container and probe its ports.
+
 **Container CMD for Goss:**
 
 dgoss starts the container with its default command and runs the tests in it.
