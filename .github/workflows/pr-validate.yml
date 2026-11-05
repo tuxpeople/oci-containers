@@ -93,6 +93,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
+      # Per-image platforms: images/<name>/platforms (one line, comma
+      # separated, e.g. linux/amd64,linux/arm64,linux/arm/v7), else PLATFORMS
+      - name: Determine platforms
+        id: platforms
+        run: |
+          file="images/${{ matrix.image }}/platforms"
+          if [[ -f "$file" ]]; then
+            list=$(tr -d ' \n' < "$file")
+          else
+            list="${{ env.PLATFORMS }}"
+          fi
+          echo "list=${list}" >> $GITHUB_OUTPUT
+          echo "Platforms: ${list}"
+
       # Same VERSION build-arg as build-release.yml for software-versioned
       # images (e.g. Dockerfiles that download a specific upstream release)
       - name: Determine version
@@ -119,7 +133,7 @@ jobs:
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./images/${{ matrix.image }}
-          platforms: ${{ env.PLATFORMS }}
+          platforms: ${{ steps.platforms.outputs.list }}
           push: false
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
@@ -197,6 +211,11 @@ jobs:
       # images/<name>/test.sh gets the image reference and tests it from outside
       - name: Run test.sh
         if: hashFiles(format('images/{0}/test.sh', matrix.image)) != ''
+        # Optional credentials for images whose test needs a login; empty in
+        # PRs from forks, test.sh must skip that part then
+        env:
+          JDOWNLOADER_TEST_USER: ${{ secrets.JDOWNLOADER_TEST_USER }}
+          JDOWNLOADER_TEST_PASSWORD: ${{ secrets.JDOWNLOADER_TEST_PASSWORD }}
         run: bash images/${{ matrix.image }}/test.sh ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:pr-${{ github.event.number }}
 
 env:

@@ -25,6 +25,7 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 | [busycurl](./images/busycurl) | busybox 1.38 (musl) with a static curl | [GHCR](https://ghcr.io/tuxpeople/busycurl) • [Docker Hub](https://hub.docker.com/r/tdeutsch/busycurl) |
 | [example-app](./images/example-app) | Example application container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
 | [imgpkg](./images/imgpkg) | Carvel imgpkg CLI on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/imgpkg) • [Docker Hub](https://hub.docker.com/r/tdeutsch/imgpkg) |
+| [jdownloader-headless](./images/jdownloader-headless) | JDownloader 2 without GUI, controlled via MyJDownloader | [GHCR](https://ghcr.io/tuxpeople/jdownloader-headless) • [Docker Hub](https://hub.docker.com/r/tdeutsch/jdownloader-headless) |
 | [python-k8s-runner](./images/python-k8s-runner) | Minimal distroless Python runtime for scripts mounted from outside | [GHCR](https://ghcr.io/tuxpeople/python-k8s-runner) • [Docker Hub](https://hub.docker.com/r/tdeutsch/python-k8s-runner) |
 | [tcp-proxy](./images/tcp-proxy) | Relay TCP connections to another host and port with socat | [GHCR](https://ghcr.io/tuxpeople/tcp-proxy) • [Docker Hub](https://hub.docker.com/r/tdeutsch/tcp-proxy) |
 | [tinysyslog](./images/tinysyslog) | Tiny syslog server (TCP/UDP 5140) that logs to stdout, on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/tinysyslog) • [Docker Hub](https://hub.docker.com/r/tdeutsch/tinysyslog) |

@@ -245,6 +245,20 @@ jobs:
             org.opencontainers.image.description=Container image for ${{ matrix.image }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
 
+      # Per-image platforms: images/<name>/platforms (one line, comma
+      # separated, e.g. linux/amd64,linux/arm64,linux/arm/v7), else PLATFORMS
+      - name: Determine platforms
+        id: platforms
+        run: |
+          file="images/${{ matrix.image }}/platforms"
+          if [[ -f "$file" ]]; then
+            list=$(tr -d ' \n' < "$file")
+          else
+            list="${{ env.PLATFORMS }}"
+          fi
+          echo "list=${list}" >> $GITHUB_OUTPUT
+          echo "Platforms: ${list}"
+
       # Per-image exceptions: images/<name>/.trivyignore.yaml (path-based,
       # e.g. secret false positives) or images/<name>/.trivyignore (CVE IDs)
       - name: Find Trivy ignore file
@@ -308,6 +322,11 @@ jobs:
       # images/<name>/test.sh gets the image reference and tests it from outside
       - name: Run test.sh
         if: hashFiles(format('images/{0}/test.sh', matrix.image)) != ''
+        # Optional credentials for images whose test needs a login; empty in
+        # PRs from forks, test.sh must skip that part then
+        env:
+          JDOWNLOADER_TEST_USER: ${{ secrets.JDOWNLOADER_TEST_USER }}
+          JDOWNLOADER_TEST_PASSWORD: ${{ secrets.JDOWNLOADER_TEST_PASSWORD }}
         run: bash images/${{ matrix.image }}/test.sh local/${{ matrix.image }}:test
 
       - name: Run Trivy (Table Output)
@@ -348,7 +367,7 @@ jobs:
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./images/${{ matrix.image }}
-          platforms: ${{ env.PLATFORMS }}
+          platforms: ${{ steps.platforms.outputs.list }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
