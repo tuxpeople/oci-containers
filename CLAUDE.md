@@ -26,6 +26,8 @@ oci-containers/
 │   │   ├── build-release.yml        # Golden Pipeline (main)
 │   │   ├── pr-validate.yml          # PR validation
 │   │   └── auto-assign-issues.yaml  # Issue management
+│   ├── scripts/
+│   │   └── render-image-table.py    # Generates README image table
 │   └── ISSUE_TEMPLATE/              # Bug & Feature templates
 ├── images/                          # Container images directory
 │   └── {image-name}/
@@ -652,7 +654,7 @@ When suggesting improvements:
 
 ### README.md
 Keep updated with:
-- Available images table
+- Available images table (generated, run `python3 .github/scripts/render-image-table.py`, checked in PRs)
 - Feature list
 - Quick start instructions
 

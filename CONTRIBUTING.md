@@ -182,6 +182,7 @@ CMD ["sleep", "infinity"]  # NICHT CMD ["/bin/bash"]!
 - [ ] Trivy hat keine CRITICAL/HIGH CVEs
 - [ ] **goss.yaml existiert und Tests passen**
 - [ ] README.md existiert
+- [ ] Image-Tabelle im Root-README aktualisiert (`python3 .github/scripts/render-image-table.py`)
 - [ ] Lokal gebaut und getestet
 - [ ] Commit Messages folgen Conventional Commits
 
