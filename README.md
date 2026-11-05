@@ -23,6 +23,7 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 | [ansible](./images/ansible) | Ansible automation container with Kerberos support | [GHCR](https://ghcr.io/tuxpeople/ansible) • [Docker Hub](https://hub.docker.com/r/tdeutsch/ansible) |
 | [buildah_rootless](./images/buildah_rootless) | buildah configured for rootless builds (chroot isolation, vfs storage) | [GHCR](https://ghcr.io/tuxpeople/buildah_rootless) • [Docker Hub](https://hub.docker.com/r/tdeutsch/buildah_rootless) |
 | [busycurl](./images/busycurl) | busybox 1.38 (musl) with a static curl | [GHCR](https://ghcr.io/tuxpeople/busycurl) • [Docker Hub](https://hub.docker.com/r/tdeutsch/busycurl) |
+| [debugcontainer](./images/debugcontainer) | Debug container with networking, storage, performance and Kubernetes tools | [GHCR](https://ghcr.io/tuxpeople/debugcontainer) • [Docker Hub](https://hub.docker.com/r/tdeutsch/debugcontainer) |
 | [example-app](./images/example-app) | Example application container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
 | [imgpkg](./images/imgpkg) | Carvel imgpkg CLI on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/imgpkg) • [Docker Hub](https://hub.docker.com/r/tdeutsch/imgpkg) |
 | [jdownloader-headless](./images/jdownloader-headless) | JDownloader 2 without GUI, controlled via MyJDownloader | [GHCR](https://ghcr.io/tuxpeople/jdownloader-headless) • [Docker Hub](https://hub.docker.com/r/tdeutsch/jdownloader-headless) |

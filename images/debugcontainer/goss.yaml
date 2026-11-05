@@ -1,0 +1,52 @@
+---
+# Every bundled tool must start (a failed download would leave a broken file)
+command:
+  flux --version:
+    exit-status: 0
+  ytt version:
+    exit-status: 0
+  imgpkg version:
+    exit-status: 0
+  oras version:
+    exit-status: 0
+  oc version --client:
+    exit-status: 0
+  kubectl version --client:
+    exit-status: 0
+  crane version:
+    exit-status: 0
+  az version:
+    exit-status: 0
+  tcpdump --version:
+    exit-status: 0
+  nmap --version:
+    exit-status: 0
+  dig -v:
+    exit-status: 0
+  iperf3 --version:
+    exit-status: 0
+  mariadb --version:
+    exit-status: 0
+  mc --version:
+    exit-status: 0
+  fio --version:
+    exit-status: 0
+  yq --version:
+    exit-status: 0
+  speedtest-cli --version:
+    exit-status: 0
+
+file:
+  /scripts/hdd-perf.sh:
+    exists: true
+    mode: "0755"
+  /etc/oc-version:
+    exists: true
+  /workdir:
+    exists: true
+    filetype: directory
+
+user:
+  abc:
+    exists: true
+    uid: 1000

@@ -427,7 +427,7 @@ CMD ["sleep", "infinity"]
 
 **MUST NOT have:**
 - Secrets or credentials
-- Root user in runtime
+- Root user in runtime (only exception: `debugcontainer`, its network and disk tools need root; documented in its Dockerfile and README)
 - Latest/floating tags
 
 ### Security Scanning

@@ -8,5 +8,21 @@
     "prEditedNotification",
     "prIgnoreNotification"
   ],
-  "rebaseWhen": "conflicted"
+  "rebaseWhen": "conflicted",
+  "packageRules": [
+    {
+      "description": "oc from the OpenShift mirror (debugcontainer): stay on 4.x",
+      "matchDatasources": [
+        "custom.openshift-ocp"
+      ],
+      "extractVersion": "^/?(?<version>\\d+\\.\\d+\\.\\d+)/?$",
+      "allowedVersions": "<5"
+    }
+  ],
+  "customDatasources": {
+    "openshift-ocp": {
+      "defaultRegistryUrlTemplate": "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/",
+      "format": "html"
+    }
+  }
 }
