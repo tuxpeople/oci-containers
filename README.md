@@ -19,6 +19,7 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 | Image | Description | Registries |
 |-------|-------------|------------|
 | [example-app](./images/example-app) | Example container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
+| [python-k8s-runner](./images/python-k8s-runner) | Distroless Python runtime for mounted scripts | [GHCR](https://ghcr.io/tuxpeople/python-k8s-runner) • [Docker Hub](https://hub.docker.com/r/tdeutsch/python-k8s-runner) |
 
 ## 🚀 Neues Image hinzufügen
 

@@ -16,6 +16,7 @@ trustedRegistries:
   - ghcr.io
   - gcr.io
   - quay.io
+  - cgr.dev  # Chainguard (minimal/distroless base images)
 
 # Override severity of specific rules
 # error | warning | info | style | ignore

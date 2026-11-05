@@ -1,0 +1,2 @@
+# Python packages for the mounted scripts, pin versions so Renovate can update them
+requests==2.34.2
