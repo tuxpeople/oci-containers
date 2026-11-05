@@ -39,12 +39,28 @@ if [[ -n "${JDOWNLOADER_TEST_USER:-}" && -n "${JDOWNLOADER_TEST_PASSWORD:-}" ]];
   docker run -d --name "$login" --read-only --tmpfs /tmp --cap-drop ALL \
     -v "$vol:/opt/JDownloader" -e MYJD_USER="$JDOWNLOADER_TEST_USER" \
     -e MYJD_PASSWORD="$JDOWNLOADER_TEST_PASSWORD" -e MYJD_DEVICE_NAME="ci-$$" "$image" >/dev/null
-  sleep 90
-  # TODO: replace this diagnostic output with a check once the log line is known
-  docker logs "$login" 2>&1 | grep -i -E "myjdownloader|connect" | grep -v -i password | cut -c1-200 | sort -u | tail -40 || true
-  docker exec "$login" sh -c 'jq "del(.email, .password)" /opt/JDownloader/cfg/org.jdownloader.api.myjdownloader.MyJDownloaderSettings.json' || true
+  # JDownloader logs the MyJDownloader requests to its own log files: a 200
+  # response means logged in, an exception (SRC: MYJD) names the reason.
+  # Only the exception name is printed, the log contains the e-mail address.
+  # shellcheck disable=SC2016 # runs in the container
+  check='log() { find /opt/JDownloader/logs -name "org.jdownloader.api.myjdownloader.MyJDownloaderController.log.*" ! -name "*.lck" -exec grep -h "$@" {} +; }
+    log -o -E "[A-Za-z]+Exception\(SRC: MYJD\)" | sort -u | grep . && exit 1
+    log -E "^HTTP/1.1 200" | grep -q . && exit 0
+    exit 2'
+  result=2
+  for _ in $(seq 1 60); do
+    result=0
+    docker exec "$login" sh -c "$check" || result=$?
+    [[ "$result" -ne 2 ]] && break
+    sleep 5
+  done
+  case "$result" in
+    0) echo "MyJDownloader login OK" ;;
+    1) echo "::error::MyJDownloader login failed (exception above)"; exit 1 ;;
+    *) echo "::error::no MyJDownloader response within 5 minutes"; exit 1 ;;
+  esac
   docker rm -f "$login" >/dev/null
 else
   echo "No JDOWNLOADER_TEST_* credentials, skipping the MyJDownloader login test"
 fi
-echo "✅ jdownloader-headless downloads and starts JDownloader, stops cleanly, runs as UID 1000"
+echo "✅ jdownloader-headless downloads and starts JDownloader, stops cleanly, runs as UID 1000${login:+, logs in to MyJDownloader}"
