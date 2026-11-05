@@ -388,7 +388,7 @@ CMD ["sleep", "infinity"]
 **Note:** Additional labels (created, revision, version, licenses, url) are set automatically by the build workflow.
 
 **SHOULD have:**
-- Multi-stage builds (for smaller images)
+- Multi-stage builds: build dependencies (compilers, `-dev` packages) only in the build stage, for smaller images and far fewer CVE findings (see `images/ansible`, `images/python-k8s-runner`)
 - Minimal package installations
 - No unnecessary tools
 

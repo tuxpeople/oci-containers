@@ -318,7 +318,7 @@ Mehr Details: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 - ✅ Immer spezifische Tags verwenden (`alpine:3.19` statt `alpine:latest`)
 - ✅ Non-root User verwenden
-- ✅ Multi-stage builds für kleinere Images
+- ✅ Multi-stage builds: Compiler und `-dev` Pakete nur in der Build-Stage (kleineres Image, deutlich weniger Trivy-Treffer, siehe [images/ansible](images/ansible/Dockerfile))
 - ✅ Layer caching optimieren
 - ✅ `.dockerignore` verwenden
 
