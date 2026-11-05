@@ -1,0 +1,33 @@
+---
+user:
+  build:
+    exists: true
+    uid: 1000
+    home: /home/build
+
+file:
+  /etc/subuid:
+    exists: true
+    contents:
+      - "build:10000:65536"
+  /etc/subgid:
+    exists: true
+    contents:
+      - "build:10000:65536"
+
+command:
+  buildah --version:
+    exit-status: 0
+    stdout:
+      - "/^buildah version 1\\./"
+    timeout: 10000
+  # Rootless settings apply to every process, not only interactive shells
+  printenv BUILDAH_ISOLATION STORAGE_DRIVER:
+    exit-status: 0
+    stdout:
+      - "chroot"
+      - "vfs"
+  id -u:
+    exit-status: 0
+    stdout:
+      - "1000"
