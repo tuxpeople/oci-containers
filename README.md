@@ -26,7 +26,6 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 | [example-app](./images/example-app) | Example application container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
 | [imgpkg](./images/imgpkg) | Carvel imgpkg CLI on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/imgpkg) • [Docker Hub](https://hub.docker.com/r/tdeutsch/imgpkg) |
 | [python-k8s-runner](./images/python-k8s-runner) | Minimal distroless Python runtime for scripts mounted from outside | [GHCR](https://ghcr.io/tuxpeople/python-k8s-runner) • [Docker Hub](https://hub.docker.com/r/tdeutsch/python-k8s-runner) |
-| [s3-backup-restore](./images/s3-backup-restore) | Back up a folder to S3 on a schedule and restore it, on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/s3-backup-restore) • [Docker Hub](https://hub.docker.com/r/tdeutsch/s3-backup-restore) |
 | [tcp-proxy](./images/tcp-proxy) | Relay TCP connections to another host and port with socat | [GHCR](https://ghcr.io/tuxpeople/tcp-proxy) • [Docker Hub](https://hub.docker.com/r/tdeutsch/tcp-proxy) |
 | [tinysyslog](./images/tinysyslog) | Tiny syslog server (TCP/UDP 5140) that logs to stdout, on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/tinysyslog) • [Docker Hub](https://hub.docker.com/r/tdeutsch/tinysyslog) |
 <!-- images-table:end -->
