@@ -1,8 +1,9 @@
 name: "Cleanup: GHCR Packages"
 
 # Monthly cleanup of the GHCR packages of all images:
+# - version tags of old releases (e.g. 1.2.3) older than TAG_RETENTION
 # - untagged versions (superseded nightly/main builds)
-# - sha-<commit> tags older than 30 days (one per build, no release value)
+# - sha-<commit> tags (one per build, no release value)
 # - orphaned cosign signatures / attestations whose image is gone
 #
 # dataaxiom/ghcr-cleanup-action understands multi-arch images: platform
@@ -25,6 +26,16 @@ on:
         type: boolean
         default: true
 
+env:
+  # How long tagged images of old releases are kept. The age is the build
+  # date: tags of the current release (latest, 1.2.3, 1.2, 1) are rebuilt
+  # every night and therefore never reach this age.
+  TAG_RETENTION: "18 months"
+  # How long untagged versions and sha-* tags are kept
+  UNTAGGED_RETENTION: "30 days"
+  # Tags that are never deleted, regardless of age
+  KEEP_TAGS: "latest,main,nightly"
+
 concurrency:
   group: cleanup-packages
 
@@ -46,14 +57,27 @@ jobs:
           echo "packages=${packages}" >> $GITHUB_OUTPUT
           echo "Packages: ${packages}"
 
-      - name: Cleanup
+      # Runs first: deleting an old tagged image also removes its platform
+      # manifests and referrers, so nothing is left for the next step
+      - name: Delete old releases
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        with:
+          packages: ${{ steps.packages.outputs.packages }}
+          delete-tags: "*"
+          exclude-tags: ${{ env.KEEP_TAGS }}
+          older-than: ${{ env.TAG_RETENTION }}
+          validate: true
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+
+      - name: Delete untagged versions, sha-* tags and orphans
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           packages: ${{ steps.packages.outputs.packages }}
           delete-untagged: true
           delete-tags: "sha-*"
+          exclude-tags: ${{ env.KEEP_TAGS }}
           delete-orphaned-images: true
           delete-ghost-images: true
-          older-than: "30 days"
+          older-than: ${{ env.UNTAGGED_RETENTION }}
           validate: true
           dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
