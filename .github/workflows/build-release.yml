@@ -70,6 +70,12 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.has-changes == 'true'
     runs-on: ubuntu-latest
+    # One build per image at a time: two quick pushes used to run in
+    # parallel and the older commit could push its tags last. Queue instead
+    # of cancelling, a running build must finish its push/sign/release.
+    concurrency:
+      group: build-release-${{ matrix.image }}
+      cancel-in-progress: false
     permissions:
       contents: write       # Required for creating tags and releases
       packages: write       # Required for GHCR
@@ -198,8 +204,10 @@ jobs:
             type=schedule,pattern=nightly
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern=latest,value=${{ steps.tag_version.outputs.new_tag }}
+            # {{version}} first: metadata-action takes the first tag as the
+            # org.opencontainers.image.version label (was "latest")
             type=semver,pattern={{version}},value=${{ steps.tag_version.outputs.new_tag }}
+            type=semver,pattern=latest,value=${{ steps.tag_version.outputs.new_tag }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag_version.outputs.new_tag }}
             type=semver,pattern={{major}},value=${{ steps.tag_version.outputs.new_tag }}
             type=sha

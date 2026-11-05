@@ -12,7 +12,7 @@ COPY requirements.txt /
 
 # Install Ansible and dependencies into a virtualenv: pip cannot replace
 # Python packages that Ubuntu installed via apt (e.g. packaging on 26.04)
-# DL3008: Pin versions - We rely on Ubuntu 24.04 LTS base image versioning
+# DL3008: Pin versions - We rely on the Ubuntu LTS base image versioning
 # DL3009: Clean apt cache - Build stage only, not part of the final image
 # hadolint ignore=DL3008,DL3009
 RUN apt-get update && \
@@ -36,9 +36,12 @@ LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containe
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Runtime only: Python for the venv, GSSAPI library for pykerberos, Kerberos tools
-# DL3008: Pin versions - We rely on Ubuntu 24.04 LTS base image versioning
+# apt-get upgrade: Ubuntu publishes security fixes in the archive weeks before
+# it refreshes the ubuntu:<version> image, so install them here
+# DL3008: Pin versions - We rely on the Ubuntu LTS base image versioning
 # hadolint ignore=DL3008
 RUN apt-get update && \
+  apt-get upgrade --no-install-recommends --yes && \
   apt-get install --no-install-suggests --no-install-recommends --yes \
     python3 \
     libgssapi-krb5-2 \
