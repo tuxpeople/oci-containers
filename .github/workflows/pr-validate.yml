@@ -60,7 +60,10 @@ jobs:
         run: |
           # Get changed files in PR
           changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
-          changed_images=$(echo "$changed_files" | grep "^images/" | cut -d'/' -f2 | sort -u | jq -R -s -c 'split("\n")[:-1] | select(length > 0)')
+          # Skip deleted images: there is nothing left to lint or build
+          changed_images=$(echo "$changed_files" | grep "^images/" | cut -d'/' -f2 | sort -u \
+            | while read -r img; do if [[ -d "images/${img}" ]]; then echo "${img}"; fi; done \
+            | jq -R -s -c 'split("\n")[:-1] | select(length > 0)')
           
           if [[ "$changed_images" == "[]" ]] || [[ -z "$changed_images" ]]; then
             echo "matrix=[]" >> $GITHUB_OUTPUT
