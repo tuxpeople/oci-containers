@@ -314,9 +314,18 @@ docker run --rm myimage myapp --version | grep -oP 'v\K[\d.]+'
 
 **Build Versioning:**
 - Analyzes commit history via Conventional Commits
-- Auto-bumps version based on commit types
+- Auto-bumps version based on commit types (computed with `dry_run`)
 - Creates git tag and GitHub release
 - Tags Docker image with new version
+
+**Order (both strategies):** the version is only computed up front. The image
+is built for amd64 and tested (Goss) first, then pushed, scanned and signed;
+the git tag and GitHub release are created last. A failed test therefore
+publishes nothing and leaves no release behind.
+
+**Nightly / manual builds** don't bump versions: they rebuild the latest
+released version (latest `{image}-v*` git tag) and push `latest` and the
+version tags again, so base image updates reach `latest` users.
 
 ---
 
@@ -504,10 +513,11 @@ docker run -it myimage /bin/bash
 
 **On Schedule:**
 - `myapp:nightly`
+- `myapp:latest`, `myapp:1.2.3`, `myapp:1.2`, `myapp:1` rebuilt for the latest released version
 
 **Important:**
 - `:latest` = Latest **stable** version (only on releases)
-- `:main` = Latest **main** branch (may be untested)
+- `:main` = Latest **main** branch (Goss-tested on amd64 before push)
 - `:1` and `:1.2` are **floating** tags (overwritten by newer versions in same major/minor)
 - Production should use pinned tags (`:1.2.3` or `:1.2`)
 - Development can use `:main`
@@ -527,6 +537,7 @@ docker run -it myimage /bin/bash
 2. **Test in PR first** - Never push directly to main
 3. **Consider impact** - One workflow change affects ALL images
 4. **Document inline** - Add comments explaining WHY
+5. **Pin actions by commit SHA** - `uses: owner/action@<sha> # vX.Y.Z`; Renovate keeps the pins up to date
 
 ### When Troubleshooting
 

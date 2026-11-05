@@ -180,10 +180,11 @@ Bei Push zu `main` (ohne Release):
 
 Scheduled Builds (nightly):
 - `my-app:nightly`
+- `my-app:latest`, `my-app:1.2.3`, `my-app:1.2`, `my-app:1` werden für die zuletzt veröffentlichte Version neu gebaut (neues Base Image)
 
 **Wichtig:** 
-- `:latest` = Neueste **stabile** Version (nur bei Releases)
-- `:main` = Neuester **main** Branch (kann ungetestet sein)
+- `:latest` = Neueste **stabile** Version (Releases, nightly neu gebaut)
+- `:main` = Neuester **main** Branch (vor dem Push mit Goss auf amd64 getestet)
 - `:1` und `:1.2` sind **floating tags** (werden bei neueren Versionen überschrieben)
 
 ### Dependency Updates via Renovate
@@ -215,14 +216,19 @@ Die Pipeline baut automatisch nur geänderte Images:
 ### Build & Release (`build-release.yml`)
 
 ```
-1. Detect Changes  ─→  2. Hadolint  ─→  3. Build
+1. Detect Changes  ─→  2. Hadolint  ─→  3. Version berechnen
                                            │
                                            ↓
-4. Trivy Scan  ←─────  5. Cosign Sign  ←──┘
-     │
-     ↓
-6. Push to GHCR + Docker Hub
+                       4. Build amd64 + Goss Tests + Trivy (Tabelle)
+                                           │  (schlägt ein Test fehl: nichts wird veröffentlicht)
+                                           ↓
+                       5. Push Multi-Arch nach GHCR + Docker Hub
+                                           │
+                                           ↓
+                       6. Trivy SARIF  ─→  7. Cosign Sign  ─→  8. Git-Tag + Release
 ```
+
+Nightly-Builds bauen die zuletzt veröffentlichte Version neu und aktualisieren dabei auch `latest` und die Versions-Tags, damit Base-Image-Updates bei allen ankommen.
 
 ### PR Validation (`pr-validate.yml`)
 

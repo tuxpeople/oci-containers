@@ -37,7 +37,7 @@ jobs:
       has-changes: ${{ steps.set-matrix.outputs.has-changes }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0  # Required for detecting changed files
 
@@ -81,7 +81,7 @@ jobs:
         image: ${{ fromJSON(needs.detect-changes.outputs.matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0  # Required for github-tag-action to analyze commits
 
@@ -90,7 +90,7 @@ jobs:
       # ==========================================
       
       - name: Run Hadolint
-        uses: hadolint/hadolint-action@v3.5.0
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
         with:
           dockerfile: images/${{ matrix.image }}/Dockerfile
           failure-threshold: error
@@ -100,13 +100,13 @@ jobs:
       # ==========================================
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v4.1.2
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Install Trivy
         env:
@@ -137,68 +137,57 @@ jobs:
             echo "🔧 Using build versioning (Conventional Commits)"
           fi
 
-      - name: Bump version (build strategy)
+      # Versions are only computed here; the git tag and the GitHub release
+      # are created at the very end, after the image passed the tests and was
+      # pushed. A failed build therefore never leaves a release behind.
+      - name: Compute next version (build strategy)
         id: tag_version_build
         if: github.event_name == 'push' && steps.version_strategy.outputs.strategy == 'build'
-        uses: mathieudutour/github-tag-action@v7.0.0
+        uses: mathieudutour/github-tag-action@af99e60ce8132224b8e6ebab5023449fe256ed46 # v7.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
           tag_prefix: "${{ matrix.image }}-v"
+          dry_run: true
 
-      - name: Create tag (software strategy)
-        id: tag_version_software
-        if: github.event_name == 'push' && steps.version_strategy.outputs.strategy == 'software'
-        run: |
-          TAG="${{ steps.version_strategy.outputs.tag }}"
-
-          # Check if tag already exists
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping creation"
-            echo "new_tag=" >> $GITHUB_OUTPUT
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "$TAG" -m "Release $TAG (software version ${{ steps.version_strategy.outputs.version }})"
-            git push origin "$TAG"
-            echo "new_tag=$TAG" >> $GITHUB_OUTPUT
-            echo "✅ Created and pushed tag: $TAG"
-          fi
-
+      # new_tag:         v<version> for docker/metadata-action (semver, no prefix)
+      # git_tag:         <image>-v<version> for the git tag and the GitHub release
+      # release_created: whether this run creates a new git tag and release
       - name: Consolidate version outputs
         id: tag_version
+        env:
+          IMAGE: ${{ matrix.image }}
+          EVENT: ${{ github.event_name }}
+          STRATEGY: ${{ steps.version_strategy.outputs.strategy }}
+          SOFTWARE_VERSION: ${{ steps.version_strategy.outputs.version }}
+          BUILD_VERSION: ${{ steps.tag_version_build.outputs.new_version }}
         run: |
-          if [[ "${{ steps.version_strategy.outputs.strategy }}" == "software" ]]; then
-            # For software versioning, use version for Docker tags (without prefix)
-            # Use full tag (with prefix) for git tag and release
-            echo "new_tag=v${{ steps.version_strategy.outputs.version }}" >> $GITHUB_OUTPUT
-            echo "new_version=${{ steps.version_strategy.outputs.version }}" >> $GITHUB_OUTPUT
-            echo "git_tag=${{ steps.version_strategy.outputs.tag }}" >> $GITHUB_OUTPUT
-            echo "release_created=${{ steps.tag_version_software.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
+          if [[ "$STRATEGY" == "software" ]]; then
+            version="$SOFTWARE_VERSION"
+          elif [[ "$EVENT" == "push" ]]; then
+            version="$BUILD_VERSION"
           else
-            # new_tag of github-tag-action carries the image prefix
-            # (e.g. myapp-v0.1.0), which docker/metadata-action cannot parse
-            # as semver, so no latest/X.Y.Z tags were created. Build v<version>.
-            new_version="${{ steps.tag_version_build.outputs.new_version }}"
-            echo "new_tag=${new_version:+v${new_version}}" >> $GITHUB_OUTPUT
-            echo "new_version=${new_version}" >> $GITHUB_OUTPUT
-            echo "git_tag=${{ steps.tag_version_build.outputs.new_tag }}" >> $GITHUB_OUTPUT
-            echo "release_created=${{ steps.tag_version_build.outputs.new_tag != '' }}" >> $GITHUB_OUTPUT
+            # Nightly/manual builds don't bump: rebuild the latest released
+            # version, so latest and the version tags get the new base image
+            latest=$(git tag -l "${IMAGE}-v*" --sort=-v:refname | head -n1)
+            version="${latest#"${IMAGE}"-v}"
           fi
 
-      - name: Create GitHub release if new version
-        uses: softprops/action-gh-release@v3
-        if: steps.tag_version.outputs.release_created == 'true'
-        with:
-          tag_name: ${{ steps.tag_version.outputs.git_tag }}
-          name: "Release ${{ steps.tag_version.outputs.git_tag }}"
-          body: |
-            ${{ steps.version_strategy.outputs.strategy == 'software' && format('Software version: {0}', steps.version_strategy.outputs.version) || steps.tag_version_build.outputs.changelog }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          git_tag="${version:+${IMAGE}-v${version}}"
+          release_created=false
+          if [[ "$EVENT" == "push" && -n "$git_tag" ]] && ! git rev-parse -q --verify "refs/tags/${git_tag}" >/dev/null; then
+            release_created=true
+          fi
+
+          echo "new_tag=${version:+v${version}}" >> $GITHUB_OUTPUT
+          echo "new_version=${version}" >> $GITHUB_OUTPUT
+          echo "git_tag=${git_tag}" >> $GITHUB_OUTPUT
+          echo "release_created=${release_created}" >> $GITHUB_OUTPUT
+          echo "📦 ${STRATEGY} versioning: version='${version}' git_tag='${git_tag}' release=${release_created}"
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: |
             ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}
@@ -217,48 +206,6 @@ jobs:
             org.opencontainers.image.description=Container image for ${{ matrix.image }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
 
-      # ==========================================
-      # REGISTRY: Login
-      # ==========================================
-
-      - name: Login to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY_GHCR }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to Docker Hub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY_DOCKERHUB }}
-          username: ${{ env.DOCKER_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # ==========================================
-      # BUILD: Multi-Arch with SBOM & Provenance
-      # ==========================================
-
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v7
-        with:
-          context: ./images/${{ matrix.image }}
-          platforms: ${{ env.PLATFORMS }}
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          sbom: true
-          provenance: true
-
-      # ==========================================
-      # SECURITY: Trivy Scan
-      # ==========================================
-
       # Per-image exceptions: images/<name>/.trivyignore.yaml (path-based,
       # e.g. secret false positives) or images/<name>/.trivyignore (CVE IDs)
       - name: Find Trivy ignore file
@@ -271,56 +218,21 @@ jobs:
             fi
           done
 
-      # limit-severities-for-sarif: without it the SARIF file contains ALL
-      # severities regardless of `severity`, flooding GitHub Security.
-      # ignore-unfixed: only report CVEs we can act on (a fix exists).
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      # ==========================================
+      # TEST: Build locally, test before anything is published
+      # ==========================================
+
+      # The docker exporter behind `load: true` cannot store multi-platform
+      # images, so test amd64 only. The push below reuses its layers.
+      - name: Build amd64 image for tests
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          limit-severities-for-sarif: true
-          ignore-unfixed: true
-          trivyignores: ${{ steps.trivyignore.outputs.file }}
-          exit-code: '0'  # Don't fail build, just report
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Run Trivy (Table Output)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
-          format: 'table'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          ignore-unfixed: true
-          trivyignores: ${{ steps.trivyignore.outputs.file }}
-
-      # ==========================================
-      # SIGNING: Cosign (Keyless)
-      # ==========================================
-
-      - name: Sign image with Cosign
-        if: github.event_name != 'pull_request'
-        env:
-          DIGEST: ${{ steps.build.outputs.digest }}
-          TAGS: ${{ steps.meta.outputs.tags }}
-        run: |
-          images=()
-          while IFS= read -r tag; do
-            [[ -z "$tag" ]] && continue
-            images+=("${tag}@${DIGEST}")
-          done <<< "$TAGS"
-          cosign sign --yes "${images[@]}"
-
-      # ==========================================
-      # TESTING: Optional Goss Tests
-      # ==========================================
+          context: ./images/${{ matrix.image }}
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: local/${{ matrix.image }}:test
+          cache-from: type=gha
 
       # goss v0.4.10 switched to tarball release assets, which
       # e1himself/goss-installation-action cannot download.
@@ -349,9 +261,112 @@ jobs:
         env:
           GOSS_FILE: images/${{ matrix.image }}/goss.yaml
           GOSS_OPTS: --retry-timeout 60s --sleep 2s --color --format documentation
+        run: dgoss run local/${{ matrix.image }}:test
+
+      - name: Run Trivy (Table Output)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: local/${{ matrix.image }}:test
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          ignore-unfixed: true
+          trivyignores: ${{ steps.trivyignore.outputs.file }}
+
+      # ==========================================
+      # REGISTRY: Login
+      # ==========================================
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ==========================================
+      # BUILD: Multi-Arch with SBOM & Provenance
+      # ==========================================
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./images/${{ matrix.image }}
+          platforms: ${{ env.PLATFORMS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          sbom: true
+          provenance: true
+
+      # ==========================================
+      # SECURITY: Trivy Scan
+      # ==========================================
+
+      # limit-severities-for-sarif: without it the SARIF file contains ALL
+      # severities regardless of `severity`, flooding GitHub Security.
+      # ignore-unfixed: only report CVEs we can act on (a fix exists).
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          limit-severities-for-sarif: true
+          ignore-unfixed: true
+          trivyignores: ${{ steps.trivyignore.outputs.file }}
+          exit-code: '0'  # Don't fail build, just report
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # ==========================================
+      # SIGNING: Cosign (Keyless)
+      # ==========================================
+
+      - name: Sign image with Cosign
+        if: github.event_name != 'pull_request'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          image="${{ env.REGISTRY_GHCR }}/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}"
-          dgoss run "${image}"
+          images=()
+          while IFS= read -r tag; do
+            [[ -z "$tag" ]] && continue
+            images+=("${tag}@${DIGEST}")
+          done <<< "$TAGS"
+          cosign sign --yes "${images[@]}"
+
+      # ==========================================
+      # RELEASE: Git tag + GitHub release (only after a successful push)
+      # ==========================================
+
+      # Creating the release also creates the git tag on this commit
+      - name: Create GitHub release if new version
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        if: steps.tag_version.outputs.release_created == 'true'
+        with:
+          tag_name: ${{ steps.tag_version.outputs.git_tag }}
+          target_commitish: ${{ github.sha }}
+          name: "Release ${{ steps.tag_version.outputs.git_tag }}"
+          body: |
+            ${{ steps.version_strategy.outputs.strategy == 'software' && format('Software version: {0}', steps.version_strategy.outputs.version) || steps.tag_version_build.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ==========================================
       # REGISTRY: Docker Hub Description
@@ -359,7 +374,7 @@ jobs:
 
       - name: Update Docker Hub description
         if: github.event_name != 'pull_request'
-        uses: peter-evans/dockerhub-description@v5
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
         with:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
