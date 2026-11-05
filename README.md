@@ -215,14 +215,19 @@ Die Pipeline baut automatisch nur geänderte Images:
 ### Build & Release (`build-release.yml`)
 
 ```
-1. Detect Changes  ─→  2. Hadolint  ─→  3. Build
+1. Detect Changes  ─→  2. Hadolint  ─→  3. Version berechnen
                                            │
                                            ↓
-4. Trivy Scan  ←─────  5. Cosign Sign  ←──┘
-     │
-     ↓
-6. Push to GHCR + Docker Hub
+                       4. Build amd64 + Goss Tests + Trivy (Tabelle)
+                                           │  (schlägt ein Test fehl: nichts wird veröffentlicht)
+                                           ↓
+                       5. Push Multi-Arch nach GHCR + Docker Hub
+                                           │
+                                           ↓
+                       6. Trivy SARIF  ─→  7. Cosign Sign  ─→  8. Git-Tag + Release
 ```
+
+Nightly-Builds bauen die zuletzt veröffentlichte Version neu und aktualisieren dabei auch `latest` und die Versions-Tags, damit Base-Image-Updates bei allen ankommen.
 
 ### PR Validation (`pr-validate.yml`)
 
