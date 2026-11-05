@@ -21,6 +21,7 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 | Image | Description | Registries |
 |-------|-------------|------------|
 | [ansible](./images/ansible) | Ansible automation container with Kerberos support | [GHCR](https://ghcr.io/tuxpeople/ansible) • [Docker Hub](https://hub.docker.com/r/tdeutsch/ansible) |
+| [busycurl](./images/busycurl) | busybox 1.38 (musl) with a static curl | [GHCR](https://ghcr.io/tuxpeople/busycurl) • [Docker Hub](https://hub.docker.com/r/tdeutsch/busycurl) |
 | [example-app](./images/example-app) | Example application container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
 | [imgpkg](./images/imgpkg) | Carvel imgpkg CLI on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/imgpkg) • [Docker Hub](https://hub.docker.com/r/tdeutsch/imgpkg) |
 | [python-k8s-runner](./images/python-k8s-runner) | Minimal distroless Python runtime for scripts mounted from outside | [GHCR](https://ghcr.io/tuxpeople/python-k8s-runner) • [Docker Hub](https://hub.docker.com/r/tdeutsch/python-k8s-runner) |
