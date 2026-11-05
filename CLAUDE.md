@@ -406,11 +406,19 @@ Every image must pass:
 
 ### CVE Exceptions
 
+Only CVEs with an available fix are reported (`ignore-unfixed`), so an
+exception is only needed for fixable CVEs or false positives.
+
 If a CVE must be ignored:
 
-1. Create `.trivyignore` in image directory
+1. Create `.trivyignore` in image directory (or `.trivyignore.yaml` for
+   path-based rules such as secret false positives; it wins if both exist)
 2. Document WHY (not just what)
 3. Reference source/discussion
+
+Build dependencies (compilers, `-dev` packages) belong in a separate build
+stage: in a single-stage image they add thousands of irrelevant findings
+(e.g. `linux-libc-dev`, pulled in by `gcc`).
 
 ```bash
 # images/myapp/.trivyignore

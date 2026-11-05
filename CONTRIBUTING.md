@@ -96,7 +96,7 @@ images/my-app/
 **KANN haben:**
 ```
 images/my-app/
-├── .trivyignore     # Optional: Ignore specific CVEs
+├── .trivyignore     # Optional: Ignore specific CVEs (or .trivyignore.yaml for path-based rules)
 └── test.sh          # Optional: Custom tests
 ```
 
