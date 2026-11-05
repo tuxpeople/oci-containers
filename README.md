@@ -24,6 +24,7 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 | [example-app](./images/example-app) | Example application container | [GHCR](https://ghcr.io/tuxpeople/example-app) • [Docker Hub](https://hub.docker.com/r/tdeutsch/example-app) |
 | [imgpkg](./images/imgpkg) | Carvel imgpkg CLI on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/imgpkg) • [Docker Hub](https://hub.docker.com/r/tdeutsch/imgpkg) |
 | [python-k8s-runner](./images/python-k8s-runner) | Minimal distroless Python runtime for scripts mounted from outside | [GHCR](https://ghcr.io/tuxpeople/python-k8s-runner) • [Docker Hub](https://hub.docker.com/r/tdeutsch/python-k8s-runner) |
+| [tinysyslog](./images/tinysyslog) | Tiny syslog server (TCP/UDP 5140) that logs to stdout, on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/tinysyslog) • [Docker Hub](https://hub.docker.com/r/tdeutsch/tinysyslog) |
 <!-- images-table:end -->
 
 ## 🚀 Neues Image hinzufügen
