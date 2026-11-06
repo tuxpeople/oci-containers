@@ -150,13 +150,13 @@ gh attestation verify oci://ghcr.io/tuxpeople/my-app:latest --owner tuxpeople \
 
 ### Aufräumen (GHCR)
 
-`cleanup-packages.yml` räumt monatlich alle Packages auf:
+`cleanup-packages.yml` räumt monatlich alle Packages auf (mit dem Workflow `ghcr-cleanup.yml` aus [tuxpeople/shared](https://github.com/tuxpeople/shared)):
 
-- Images alter Releases (z.B. `1.2.3`), älter als 18 Monate. Die Tags des aktuellen Releases werden jede Nacht neu gebaut und erreichen dieses Alter nie.
-- Versionen ohne Tag, `sha-*` Tags und verwaiste Signaturen/Attestations, älter als 30 Tage
+- Images alter Releases (z.B. `1.2.3`), älter als 36 Monate. Die Tags des aktuellen Releases werden jede Nacht neu gebaut und erreichen dieses Alter nie.
+- Versionen ohne Tag, `sha-*` Tags und verwaiste Signaturen/Attestations, älter als 12 Monate
 - `latest`, `main` und `nightly` werden nie gelöscht
 
-Die Fristen und geschützten Tags stehen als `env` am Anfang des Workflows (`TAG_RETENTION`, `UNTAGGED_RETENTION`, `KEEP_TAGS`). Multi-Arch Images bleiben intakt. Manuell gestartet läuft der Workflow standardmässig als Dry Run.
+Die Fristen und geschützten Tags sind Inputs des zentralen Workflows (`tag-retention`, `untagged-retention`, `keep-tags`) und lassen sich beim Aufruf überschreiben. Multi-Arch Images bleiben intakt. Manuell gestartet läuft der Workflow standardmässig als Dry Run.
 
 ## 🔄 Versioning & Updates
 
