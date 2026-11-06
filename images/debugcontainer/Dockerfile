@@ -3,7 +3,7 @@
 # Thanks to https://github.com/dbamaster/mssql-tools-alpine and
 # https://github.com/ssro/dnsperf
 
-FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS downloader
+FROM alpine:3.24.4@sha256:93b41ef40b1677fce8fcc64ff4af09daddfacf5040afde618bc46c1e2d1cc7d4 AS downloader
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -51,7 +51,7 @@ RUN mkdir -p /out && \
     echo "${ORAS_VERSION}" > /out/oras-version
 
 # azure-cli in a venv; build dependencies (Rust, headers) stay in this stage
-FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS python-builder
+FROM alpine:3.24.4@sha256:93b41ef40b1677fce8fcc64ff4af09daddfacf5040afde618bc46c1e2d1cc7d4 AS python-builder
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache python3 musl-dev python3-dev libffi-dev openssl-dev cargo make gcc
@@ -62,7 +62,7 @@ RUN python3 -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
     /opt/venv/bin/pip install --no-cache-dir --requirement /tmp/requirements.txt
 
-FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+FROM alpine:3.24.4@sha256:93b41ef40b1677fce8fcc64ff4af09daddfacf5040afde618bc46c1e2d1cc7d4
 
 # OCI Labels
 LABEL org.opencontainers.image.title="debugcontainer"
