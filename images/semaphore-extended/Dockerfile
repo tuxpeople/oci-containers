@@ -30,15 +30,17 @@ FROM semaphoreui/semaphore:v2.17.0@sha256:c213bd7805120c23a47a72e9ed2e2f9dd967cd
 
 # OCI Labels
 LABEL org.opencontainers.image.title="semaphore-extended"
-LABEL org.opencontainers.image.description="Semaphore UI with additional CLI tools (gh)"
+LABEL org.opencontainers.image.description="Semaphore UI for Ansible with additional CLI tools (gh), without Terraform and OpenTofu"
 LABEL org.opencontainers.image.vendor="tuxpeople"
 LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"
 
 COPY --from=tools /out/ /usr/local/bin/
 
-# Upstream's Alpine packages are as old as its image
+# Upstream's Alpine packages are as old as its image. Terraform, OpenTofu and
+# Terragrunt are not used here and hold most of the scanner findings.
 USER 0
-RUN apk upgrade --no-cache
+RUN apk upgrade --no-cache && \
+    rm -f /usr/local/bin/terraform /usr/local/bin/tofu /usr/local/bin/terragrunt
 
 # Upstream's user, entrypoint and command stay unchanged
 USER 1001

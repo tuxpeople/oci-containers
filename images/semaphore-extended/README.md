@@ -8,6 +8,8 @@ This is an unofficial image, not affiliated with or supported by the Semaphore U
 |---|---|
 | [`gh`](https://cli.github.com/) | GitHub CLI |
 
+Removed from the upstream image: `terraform`, `tofu` and `terragrunt`. Terraform and OpenTofu tasks do not work with this image. Removing them does not make the image smaller, they stay in an upstream layer.
+
 ## Usage
 
 Replace the upstream image, nothing else changes:
@@ -33,7 +35,7 @@ Upstream uses a `v` prefix (`v2.17.0`), these tags do not.
 
 ## Known findings
 
-Trivy reports findings in the binaries that upstream ships (`semaphore`, `terraform`, `terragrunt`, `tofu`) and in its Ansible virtualenv. They can only be fixed upstream.
+Trivy reports findings in the `semaphore` binary and in the Ansible virtualenv that upstream ships. They can only be fixed upstream.
 
 ## Adding a tool
 

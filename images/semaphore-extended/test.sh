@@ -36,3 +36,11 @@ for tool in "${tools[@]}"; do
   docker exec "$name" "$tool" --version | head -n 1
 done
 echo "✅ all tools run"
+
+for tool in terraform tofu terragrunt; do
+  if docker exec "$name" sh -c "command -v $tool" >/dev/null; then
+    echo "::error::$tool should not be in the image"
+    exit 1
+  fi
+done
+echo "✅ Terraform, OpenTofu and Terragrunt are removed"
