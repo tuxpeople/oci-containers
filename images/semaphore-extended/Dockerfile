@@ -1,4 +1,4 @@
-# semaphore - Semaphore UI with additional CLI tools for tasks
+# semaphore-extended - Semaphore UI with additional CLI tools for tasks
 # To add a tool: download it in the tools stage and add it to `tools` in test.sh
 
 FROM alpine:3.24.4@sha256:93b41ef40b1677fce8fcc64ff4af09daddfacf5040afde618bc46c1e2d1cc7d4 AS tools
@@ -29,7 +29,7 @@ RUN mkdir -p /out && \
 FROM semaphoreui/semaphore:v2.17.0@sha256:c213bd7805120c23a47a72e9ed2e2f9dd967cdc4ade83c48dc02011d5f294b6b
 
 # OCI Labels
-LABEL org.opencontainers.image.title="semaphore"
+LABEL org.opencontainers.image.title="semaphore-extended"
 LABEL org.opencontainers.image.description="Semaphore UI with additional CLI tools (gh)"
 LABEL org.opencontainers.image.vendor="tuxpeople"
 LABEL org.opencontainers.image.source="https://github.com/tuxpeople/oci-containers"

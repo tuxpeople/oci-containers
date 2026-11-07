@@ -1,6 +1,8 @@
-# semaphore
+# semaphore-extended
 
 [Semaphore UI](https://semaphoreui.com/) with additional CLI tools for tasks. Everything else is the upstream image `semaphoreui/semaphore`: same entrypoint, user (UID 1001) and configuration.
+
+This is an unofficial image, not affiliated with or supported by the Semaphore UI project. Semaphore UI is licensed under the [MIT License](https://github.com/semaphoreui/semaphore/blob/develop/LICENSE).
 
 | Added tool | Purpose |
 |---|---|
@@ -13,7 +15,7 @@ Replace the upstream image, nothing else changes:
 ```yaml
 services:
   semaphore:
-    image: ghcr.io/tuxpeople/semaphore:2.17.0
+    image: ghcr.io/tuxpeople/semaphore-extended:2.17.0
 ```
 
 Upstream uses a `v` prefix (`v2.17.0`), these tags do not.
@@ -44,6 +46,6 @@ Trivy reports findings in the binaries that upstream ships (`semaphore`, `terraf
 No Goss tests: the server does not start without configuration, and dgoss cannot pass any. `test.sh` starts it with a local BoltDB instead.
 
 ```bash
-docker build -t semaphore:test .
-./test.sh semaphore:test
+docker build -t semaphore-extended:test .
+./test.sh semaphore-extended:test
 ```

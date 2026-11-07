@@ -4,7 +4,7 @@
 # Usage: test.sh <image>
 set -euo pipefail
 image="$1"
-name="semaphore-test-$$"
+name="semaphore-extended-test-$$"
 # Added tools, each must support --version
 tools=(gh)
 
