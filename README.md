@@ -28,6 +28,7 @@ Zentrale Container-Registry für alle meine OCI-Images. Gebaut mit Best Practice
 | [imgpkg](./images/imgpkg) | Carvel imgpkg CLI on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/imgpkg) • [Docker Hub](https://hub.docker.com/r/tdeutsch/imgpkg) |
 | [jdownloader-headless](./images/jdownloader-headless) | JDownloader 2 without GUI, controlled via MyJDownloader | [GHCR](https://ghcr.io/tuxpeople/jdownloader-headless) • [Docker Hub](https://hub.docker.com/r/tdeutsch/jdownloader-headless) |
 | [python-k8s-runner](./images/python-k8s-runner) | Minimal distroless Python runtime for scripts mounted from outside | [GHCR](https://ghcr.io/tuxpeople/python-k8s-runner) • [Docker Hub](https://hub.docker.com/r/tdeutsch/python-k8s-runner) |
+| [semaphore-extended](./images/semaphore-extended) | Semaphore UI for Ansible with additional CLI tools (gh), without Terraform and OpenTofu | [GHCR](https://ghcr.io/tuxpeople/semaphore-extended) • [Docker Hub](https://hub.docker.com/r/tdeutsch/semaphore-extended) |
 | [tcp-proxy](./images/tcp-proxy) | Relay TCP connections to another host and port with socat | [GHCR](https://ghcr.io/tuxpeople/tcp-proxy) • [Docker Hub](https://hub.docker.com/r/tdeutsch/tcp-proxy) |
 | [tinysyslog](./images/tinysyslog) | Tiny syslog server (TCP/UDP 5140) that logs to stdout, on a distroless static base | [GHCR](https://ghcr.io/tuxpeople/tinysyslog) • [Docker Hub](https://hub.docker.com/r/tdeutsch/tinysyslog) |
 <!-- images-table:end -->
