@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Functional test: start the server with a local BoltDB, then check that it
+# Functional test: start the server with a local SQLite, then check that it
 # answers and that every added tool runs as the runtime user.
 # Usage: test.sh <image>
 set -euo pipefail
@@ -15,7 +15,7 @@ cleanup() {
 trap cleanup EXIT
 
 docker run -d --name "$name" --cap-drop ALL \
-  -e SEMAPHORE_DB_DIALECT=bolt \
+  -e SEMAPHORE_DB_DIALECT=sqlite \
   -e SEMAPHORE_ADMIN=admin -e SEMAPHORE_ADMIN_PASSWORD=test-only \
   -e SEMAPHORE_ADMIN_NAME=Admin -e SEMAPHORE_ADMIN_EMAIL=admin@example.com \
   "$image" >/dev/null
