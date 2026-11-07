@@ -26,7 +26,7 @@ RUN mkdir -p /out && \
     chmod 0755 /out/*
 
 # The tag is the image version (get-version.sh reads it), Renovate updates it
-FROM semaphoreui/semaphore:v2.17.39@sha256:0a5db8fffcc6df148e8682acdd860aa96a82cb7b07540c10a688a6076838d3d1
+FROM semaphoreui/semaphore:v2.19.17@sha256:008dacd9f1adbd92e8a048f1786ae1dd9bed2a352aca2eb30b9837de5706e7f7
 
 # OCI Labels
 LABEL org.opencontainers.image.title="semaphore-extended"

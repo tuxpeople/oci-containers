@@ -17,7 +17,7 @@ Replace the upstream image, nothing else changes:
 ```yaml
 services:
   semaphore:
-    image: ghcr.io/tuxpeople/semaphore-extended:2.17.0
+    image: ghcr.io/tuxpeople/semaphore-extended:2.19.17
 ```
 
 Upstream uses a `v` prefix (`v2.17.0`), these tags do not.
@@ -30,6 +30,7 @@ Upstream uses a `v` prefix (`v2.17.0`), these tags do not.
 - Tools are downloaded from their upstream release and verified against the published checksums
 - Version follows upstream: it comes from the `FROM` tag (`get-version.sh`), Renovate updates it
 - Tags: `X.Y.Z`, `X.Y`, `X`, `latest`. Pin a full version: Semaphore migrates its database on upgrades
+- Semaphore 2.19 removed BoltDB and its migration tool: use SQLite, MySQL or PostgreSQL
 - ⚠️ The tag does not change when only a tool or a package changes: `2.17.0` is rebuilt in place. Pin the digest if that matters
 - Platforms: `linux/amd64`, `linux/arm64`
 
@@ -45,7 +46,7 @@ Trivy reports findings in the `semaphore` binary and in the Ansible virtualenv t
 
 ## Testing
 
-No Goss tests: the server does not start without configuration, and dgoss cannot pass any. `test.sh` starts it with a local BoltDB instead.
+No Goss tests: the server does not start without configuration, and dgoss cannot pass any. `test.sh` starts it with a local SQLite database instead.
 
 ```bash
 docker build -t semaphore-extended:test .
