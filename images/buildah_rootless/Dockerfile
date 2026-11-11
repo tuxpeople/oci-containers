@@ -2,7 +2,7 @@
 # From: https://github.com/containers/buildah/blob/main/docs/tutorials/05-openshift-rootless-build.md
 
 # The tag is the image version (get-version.sh reads it), Renovate updates it
-FROM quay.io/buildah/stable:v1.43.5@sha256:a6f96bfffc47f36462985573d85e87f782bf2d8b37e02cb3dd307713bfa6cc13
+FROM quay.io/buildah/stable:v1.45.1@sha256:30e1bdda5cbdf313163eed09e31917221ecf4a83195a03923d5ad822554802e4
 
 # OCI Labels
 LABEL org.opencontainers.image.title="buildah_rootless"
