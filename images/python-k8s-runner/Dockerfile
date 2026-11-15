@@ -17,7 +17,7 @@ RUN python -m venv /home/nonroot/venv && \
 
 # Copy the virtualenv into the minimal distroless Chainguard Python runtime
 # hadolint ignore=DL3007
-FROM cgr.dev/chainguard/python:latest@sha256:b194f818c3fbf172c83597753e72561f14f58d22e9ea6bf148b7597246f65c8f
+FROM cgr.dev/chainguard/python:latest@sha256:1f18c1d5b8b986ee00542f2528899b1b68484b9991a80d7c5bcb819e931ddf69
 
 # OCI Labels
 LABEL org.opencontainers.image.title="python-k8s-runner"
