@@ -7,7 +7,7 @@ ARG TARGETOS
 ARG TARGETARCH
 
 # renovate: datasource=github-releases depName=cli/cli
-ARG GH_VERSION=v2.103.3
+ARG GH_VERSION=v2.104.0
 
 RUN apk add --no-cache curl
 
