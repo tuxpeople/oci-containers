@@ -11,7 +11,7 @@ ARG TARGETARCH
 # renovate: datasource=github-releases depName=fluxcd/flux2
 ARG FLUX_VERSION=v2.10.0
 # renovate: datasource=github-releases depName=carvel-dev/ytt
-ARG YTT_VERSION=v0.55.4
+ARG YTT_VERSION=v0.56.0
 # renovate: datasource=github-releases depName=carvel-dev/imgpkg
 ARG IMGPKG_VERSION=v0.49.0
 # renovate: datasource=github-releases depName=oras-project/oras
