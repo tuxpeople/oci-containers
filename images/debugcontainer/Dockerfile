@@ -13,7 +13,7 @@ ARG FLUX_VERSION=v2.10.0
 # renovate: datasource=github-releases depName=carvel-dev/ytt
 ARG YTT_VERSION=v0.55.4
 # renovate: datasource=github-releases depName=carvel-dev/imgpkg
-ARG IMGPKG_VERSION=v0.49.0
+ARG IMGPKG_VERSION=v0.49.2
 # renovate: datasource=github-releases depName=oras-project/oras
 ARG ORAS_VERSION=v1.3.6
 
