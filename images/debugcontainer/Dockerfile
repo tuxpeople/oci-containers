@@ -15,7 +15,7 @@ ARG YTT_VERSION=v0.56.0
 # renovate: datasource=github-releases depName=carvel-dev/imgpkg
 ARG IMGPKG_VERSION=v0.49.2
 # renovate: datasource=github-releases depName=oras-project/oras
-ARG ORAS_VERSION=v1.3.6
+ARG ORAS_VERSION=v1.4.0
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache curl
