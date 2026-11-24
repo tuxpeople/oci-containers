@@ -9,7 +9,7 @@ ARG TARGETOS
 ARG TARGETARCH
 
 # renovate: datasource=github-releases depName=fluxcd/flux2
-ARG FLUX_VERSION=v2.10.0
+ARG FLUX_VERSION=v2.10.1
 # renovate: datasource=github-releases depName=carvel-dev/ytt
 ARG YTT_VERSION=v0.56.0
 # renovate: datasource=github-releases depName=carvel-dev/imgpkg
