@@ -6,7 +6,7 @@
 # DL3007: Chainguard only publishes `latest` tags for free. The digest is
 # pinned, so Renovate proposes base image updates as PRs that have to pass CI.
 # hadolint ignore=DL3007
-FROM cgr.dev/chainguard/python:latest-dev@sha256:768ee36ee9f4b8c882634c07d0b889425bc8e100886a3f742b83b1c647cc2d4b AS build
+FROM cgr.dev/chainguard/python:latest-dev@sha256:42c7616876638d3fc9f6663aeb159a346ebe494aced2c7c2c1bb990245ba45b8 AS build
 
 COPY requirements.txt /tmp/requirements.txt
 RUN python -m venv /home/nonroot/venv && \
